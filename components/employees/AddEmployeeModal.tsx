@@ -1,0 +1,90 @@
+import React, { useState } from 'react';
+import type { Employee } from '../../types';
+import { generateJobDescription } from '../../services/geminiService';
+import Modal from '../common/Modal';
+import Button from '../common/Button';
+import EmployeeFormFields from './EmployeeFormFields';
+
+interface AddEmployeeModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onAddEmployee: (newEmployee: Omit<Employee, 'id' | 'avatarUrl' | 'tenantId'>) => void;
+  isSubmitting: boolean;
+}
+
+const initialState: Omit<Employee, 'id' | 'avatarUrl' | 'tenantId' | 'basicSalary' | 'allowances' | 'deductions'> & { basicSalary: string; allowances: string; deductions: string } = {
+    name: '',
+    qid: '',
+    position: '',
+    department: 'Engineering',
+    basicSalary: '',
+    allowances: '',
+    deductions: '',
+    bankName: '',
+    iban: '',
+    joinDate: '',
+};
+
+const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onClose, onAddEmployee, isSubmitting }) => {
+  const [formData, setFormData] = useState(initialState);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [description, setDescription] = useState('');
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleGenerateDescription = async () => {
+    if (!formData.position) return;
+    setIsGenerating(true);
+    const desc = await generateJobDescription(formData.position);
+    setDescription(desc);
+    setIsGenerating(false);
+  };
+  
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onAddEmployee({
+      ...formData,
+      basicSalary: parseFloat(formData.basicSalary) || 0,
+      allowances: parseFloat(formData.allowances) || 0,
+      deductions: parseFloat(formData.deductions) || 0,
+    });
+  };
+  
+  const handleClose = () => {
+    setFormData(initialState);
+    setDescription('');
+    onClose();
+  }
+
+  const modalFooter = (
+    <>
+      <Button variant="secondary" onClick={handleClose} disabled={isSubmitting}>Cancel</Button>
+      <Button type="submit" form="add-employee-form" isLoading={isSubmitting}>Add Employee</Button>
+    </>
+  );
+
+  return (
+    <Modal isOpen={isOpen} onClose={handleClose} title="Add New Employee" footer={modalFooter}>
+      <form id="add-employee-form" onSubmit={handleSubmit} className="space-y-4">
+        <EmployeeFormFields formData={formData as unknown as Partial<Employee>} handleChange={handleChange} />
+        
+        {formData.position && (
+          <div className="p-3 bg-gray-50 rounded-md">
+            <div className="flex justify-between items-center">
+                <p className="text-sm font-medium text-gray-600">Job Description Preview</p>
+                <Button variant="secondary" size="sm" onClick={handleGenerateDescription} isLoading={isGenerating}>
+                 Generate with Gemini
+                </Button>
+            </div>
+            {description && <p className="mt-2 text-sm text-gray-500">{description}</p>}
+          </div>
+        )}
+      </form>
+    </Modal>
+  );
+};
+
+export default AddEmployeeModal;
