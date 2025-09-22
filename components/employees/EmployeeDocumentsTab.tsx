@@ -1,6 +1,7 @@
 import React from 'react';
 import { useDataFetching } from '../../hooks/useDataFetching';
 import { getEmployeeDocuments } from '../../services/api';
+import type { EmployeeDocument } from '../../types';
 import LoadingSpinner from '../common/LoadingSpinner';
 import EmptyState from '../common/EmptyState';
 import DocumentIcon from '../icons/DocumentIcon';
@@ -18,17 +19,17 @@ const getStatus = (expiryDate: string): { text: string; color: string } => {
     thirtyDaysFromNow.setDate(today.getDate() + 30);
 
     if (expiry < today) {
-        return { text: 'Expired', color: 'bg-red-100 text-red-800' };
+        return { text: 'Expired', color: 'bg-red-500/10 text-red-400' };
     }
     if (expiry <= thirtyDaysFromNow) {
-        return { text: 'Expiring Soon', color: 'bg-gray-200 text-gray-800' };
+        return { text: 'Expiring Soon', color: 'bg-yellow-500/10 text-yellow-400' };
     }
-    return { text: 'Valid', color: 'bg-gray-100 text-gray-700' };
+    return { text: 'Valid', color: 'bg-muted text-muted-foreground' };
 };
 
 const EmployeeDocumentsTab: React.FC<EmployeeDocumentsTabProps> = ({ employeeId }) => {
   const { currentUser } = useAppContext();
-  const { data: documents, loading } = useDataFetching(() => getEmployeeDocuments(currentUser!.tenantId, employeeId));
+  const { data: documents, loading } = useDataFetching(currentUser ? `employeeDocs-${currentUser.tenantId}-${employeeId}` : null, () => getEmployeeDocuments(currentUser!.tenantId, employeeId));
 
   if (loading) {
     return <LoadingSpinner />;
@@ -36,16 +37,16 @@ const EmployeeDocumentsTab: React.FC<EmployeeDocumentsTabProps> = ({ employeeId 
 
   return (
     <div className="max-w-4xl mx-auto">
-      <h3 className="text-lg font-semibold text-brand-dark mb-4">Employee Documents</h3>
+      <h3 className="text-lg font-semibold text-foreground mb-4">Employee Documents</h3>
       {(documents || []).length > 0 ? (
         <ul className="space-y-3">
           {(documents || []).map(doc => (
-            <li key={doc.id} className="flex items-center justify-between p-3 bg-white border rounded-lg hover:bg-slate-50 transition-colors">
+            <li key={doc.id} className="flex items-center justify-between p-3 bg-secondary border border-border rounded-lg hover:bg-muted/50 transition-colors">
               <div className="flex items-center">
-                 <DocumentIcon className="w-6 h-6 mr-4 text-brand-primary" />
+                 <DocumentIcon className="w-6 h-6 mr-4 text-primary" />
                  <div>
-                    <p className="font-semibold text-brand-dark">{doc.documentType}</p>
-                    <p className="text-xs text-slate-500">Expires on: {new Date(doc.expiryDate).toLocaleDateString()}</p>
+                    <p className="font-semibold text-foreground">{doc.documentType}</p>
+                    <p className="text-xs text-muted-foreground">Expires on: {new Date(doc.expiryDate).toLocaleDateString()}</p>
                  </div>
               </div>
               <div>

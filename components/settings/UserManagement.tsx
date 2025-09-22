@@ -35,9 +35,9 @@ const UserManagement: React.FC = () => {
     }
 
     return (
-        <div className="bg-brand-light p-6 rounded-lg shadow-md">
+        <div className="bg-card text-card-foreground p-6 rounded-lg shadow-md border border-border">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-brand-dark">User Accounts</h3>
+              <h3 className="text-lg font-semibold text-foreground">User Accounts</h3>
               <Button onClick={() => openModal('inviteUser', { onUpdate: handleUpdate })} icon={<PlusIcon />}>
                 Invite User
               </Button>
@@ -46,8 +46,8 @@ const UserManagement: React.FC = () => {
                 <EmptyState message="No Users Found" description="System user accounts will be displayed here." />
             ) : (
                 <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left text-gray-500">
-                        <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+                    <table className="w-full text-sm text-left text-muted-foreground">
+                        <thead className="text-xs uppercase bg-secondary text-secondary-foreground">
                             <tr>
                                 <th scope="col" className="px-6 py-3">Full Name</th>
                                 <th scope="col" className="px-6 py-3">Username (Email)</th>
@@ -57,11 +57,11 @@ const UserManagement: React.FC = () => {
                         </thead>
                         <tbody>
                             {users.map((user) => (
-                                <tr key={user.id} className="bg-white border-b hover:bg-gray-50">
-                                    <td className="px-6 py-4 font-semibold text-gray-900">{user.name}</td>
+                                <tr key={user.id} className="border-b border-border hover:bg-muted/50">
+                                    <td className="px-6 py-4 font-semibold text-foreground">{user.name}</td>
                                     <td className="px-6 py-4 font-mono">{user.username}</td>
                                     <td className="px-6 py-4">
-                                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-muted text-muted-foreground">
                                             {user.role.name}
                                         </span>
                                     </td>

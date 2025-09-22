@@ -1,18 +1,21 @@
+
 import React from 'react';
-import { useDataFetching } from '../../hooks/useDataFetching';
-import { getAlerts } from '../../services/api';
-import { View } from '../../types';
-import SparklesIcon from '../icons/SparklesIcon';
-import LoadingSpinner from '../common/LoadingSpinner';
-import { useAppContext } from '../../AppContext';
+import { useDataFetching } from '../../hooks/useDataFetching.ts';
+import { getAlerts } from '../../services/api.ts';
+import { View } from '../../types.ts';
+import SparklesIcon from '../icons/SparklesIcon.tsx';
+import SkeletonLoader from '../common/SkeletonLoader.tsx';
+import { useAppContext } from '../../AppContext.tsx';
+import Card from '../common/Card.tsx';
 
 interface AIInsightsProps {
   onNavigate: (view: View) => void;
+  isLoading?: boolean;
 }
 
-const AIInsights: React.FC<AIInsightsProps> = ({ onNavigate }) => {
+const AIInsights: React.FC<AIInsightsProps> = ({ onNavigate, isLoading }) => {
   const { currentUser } = useAppContext();
-  const { data: alerts, loading } = useDataFetching(() => getAlerts(currentUser!.tenantId));
+  const { data: alerts } = useDataFetching(currentUser ? `ai-insights-alerts-${currentUser!.tenantId}` : null, () => getAlerts(currentUser!.tenantId));
 
   const insights = React.useMemo(() => {
     if (!alerts) return [];
@@ -41,29 +44,33 @@ const AIInsights: React.FC<AIInsightsProps> = ({ onNavigate }) => {
   }, [alerts]);
 
   return (
-    <div className="bg-brand-light p-5 rounded-xl border border-gray-200">
-      <div className="flex items-center mb-4">
-        <SparklesIcon className="w-5 h-5 mr-2 text-brand-primary" />
-        <div>
-          <h3 className="text-base font-bold text-brand-dark">AI Insights</h3>
-          <p className="text-xs text-gray-400">Proactive recommendations</p>
+    <Card
+        title="AI Insights"
+        subtitle="Proactive recommendations"
+        icon={<SparklesIcon className="w-6 h-6 text-primary" />}
+    >
+      {isLoading ? (
+        <div className="space-y-3">
+            {[...Array(2)].map((_, i) => (
+                 <div key={i} className="bg-secondary p-3 rounded-lg">
+                    <SkeletonLoader className="h-4 w-1/3 mb-2" />
+                    <SkeletonLoader className="h-3 w-full mb-2" />
+                    <SkeletonLoader className="h-3 w-1/4" />
+                </div>
+            ))}
         </div>
-      </div>
-      
-      {loading ? (
-        <div className="py-5"><LoadingSpinner /></div>
       ) : insights.length > 0 ? (
         <div className="space-y-3">
           {insights.map(insight => (
             <div 
               key={insight.id} 
-              className="bg-brand-primary-light/50 p-3 rounded-lg"
+              className="bg-secondary p-3 rounded-lg"
             >
-              <h4 className="font-semibold text-sm text-brand-dark">{insight.title}</h4>
-              <p className="text-xs text-slate-600 my-1">{insight.description}</p>
+              <h4 className="font-semibold text-sm text-foreground">{insight.title}</h4>
+              <p className="text-xs text-muted-foreground my-1">{insight.description}</p>
               <button
                 onClick={() => onNavigate(insight.targetView)}
-                className="text-xs font-bold text-brand-primary hover:underline"
+                className="text-xs font-bold text-primary hover:underline"
               >
                 {insight.actionText} &rarr;
               </button>
@@ -71,11 +78,11 @@ const AIInsights: React.FC<AIInsightsProps> = ({ onNavigate }) => {
           ))}
         </div>
       ) : (
-        <div className="text-center text-gray-500 py-6">
+        <div className="text-center text-muted-foreground py-6">
           <p className="text-sm font-medium">No critical insights at this time.</p>
         </div>
       )}
-    </div>
+    </Card>
   );
 };
 

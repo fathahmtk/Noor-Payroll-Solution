@@ -3,6 +3,8 @@ import type { User, View } from '../../types';
 import { getAlerts } from '../../services/api';
 import NotificationsPanel from './NotificationsPanel';
 import { useAppContext } from '../../AppContext';
+import SunIcon from '../icons/SunIcon';
+import MoonIcon from '../icons/MoonIcon';
 
 interface TopNavBarProps {
   user: User;
@@ -13,7 +15,7 @@ const TopNavBar: React.FC<TopNavBarProps> = ({ user, onNavigate }) => {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [alertCount, setAlertCount] = useState(0);
   const [alerts, setAlerts] = useState<{ expiringDocs: any[], pendingLeaves: any[] }>({ expiringDocs: [], pendingLeaves: [] });
-  const { currentUser } = useAppContext();
+  const { currentUser, theme, toggleTheme } = useAppContext();
 
   useEffect(() => {
     if (!currentUser?.tenantId) return;
@@ -37,21 +39,25 @@ const TopNavBar: React.FC<TopNavBarProps> = ({ user, onNavigate }) => {
   };
 
   return (
-    <div className="bg-brand-light border-b border-slate-200 px-6 py-2 flex items-center justify-between z-40">
+    <div className="bg-card text-foreground border-b border-border px-6 py-2 flex items-center justify-between z-40">
       <div className="flex items-center">
          <span className="text-2xl mr-3" role="img" aria-label="Qatar Flag">🇶🇦</span>
-         <h1 className="text-lg font-bold text-brand-dark hidden sm:block">{user.companyName}</h1>
+         <h1 className="text-lg font-bold hidden sm:block">{user.companyName}</h1>
       </div>
       <div className="flex items-center space-x-4">
+        <button onClick={toggleTheme} className="text-muted-foreground hover:text-primary p-2 rounded-full hover:bg-secondary">
+            {theme === 'dark' ? <SunIcon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
+        </button>
+
         <div className="relative">
-          <button onClick={() => setIsPanelOpen(!isPanelOpen)} className="relative text-nav-icon hover:text-brand-primary p-2 rounded-full hover:bg-slate-100">
+          <button onClick={() => setIsPanelOpen(!isPanelOpen)} className="relative text-muted-foreground hover:text-primary p-2 rounded-full hover:bg-secondary">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
             </svg>
             {alertCount > 0 && (
               <span className="absolute top-1 right-1 flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                <span className="relative inline-flex items-center justify-center text-[9px] text-white rounded-full h-4 w-4 bg-red-500 border-2 border-white top-[-4px] right-[-4px]">
+                <span className="relative inline-flex items-center justify-center text-[9px] text-white rounded-full h-4 w-4 bg-red-500 border-2 border-card top-[-4px] right-[-4px]">
                     {alertCount}
                 </span>
               </span>
@@ -61,12 +67,12 @@ const TopNavBar: React.FC<TopNavBarProps> = ({ user, onNavigate }) => {
         </div>
 
         <div className="flex items-center space-x-2">
-           <div className="w-9 h-9 rounded-full bg-brand-primary flex items-center justify-center text-white font-semibold text-sm ring-2 ring-offset-1 ring-brand-primary/50">
+           <div className="w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm ring-2 ring-offset-1 ring-offset-primary/50">
              {getInitials(user.name)}
            </div>
           <div className="hidden md:block">
-            <p className="text-sm font-semibold text-brand-dark">{user.name}</p>
-            <p className="text-xs text-slate-500">{user.role.name}</p>
+            <p className="text-sm font-semibold">{user.name}</p>
+            <p className="text-xs text-muted-foreground">{user.role.name}</p>
           </div>
         </div>
       </div>

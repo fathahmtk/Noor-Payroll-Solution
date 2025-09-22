@@ -19,17 +19,19 @@ export const generateSIFContent = (
     
     // Header Record (H)
     const headerRecord = [
+        'H',
         settings.establishmentId,
         `${year}${String(new Date(`${month} 1, ${year}`).getMonth() + 1).padStart(2, '0')}`,
         totalNetAmount.toFixed(2),
         employees.length
     ].join(',');
 
-    // Detail Records (D)
-    const detailRecords = employees.map(emp => {
+    // Employee Records (E)
+    const employeeRecords = employees.map(emp => {
         const netSalary = emp.basicSalary + emp.allowances - emp.deductions;
         const narration = `Salary for ${month} ${year}`;
         return [
+            'E',
             emp.qid,
             emp.iban.replace(/\s/g, ''), // Employee Account (IBAN)
             emp.name,                     // Employee Name
@@ -43,5 +45,5 @@ export const generateSIFContent = (
         ].join(',');
     }).join('\n');
 
-    return `${headerRecord}\n${detailRecords}`;
+    return `${headerRecord}\n${employeeRecords}`;
 };

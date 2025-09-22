@@ -1,8 +1,32 @@
+export enum SubscriptionTier {
+  Free = 'free',
+  Premium = 'premium',
+  Enterprise = 'enterprise',
+}
+
+export enum EmployeeStatus {
+  Active = 'Active',
+  OnLeave = 'On Leave',
+  Terminated = 'Terminated',
+  Transferred = 'Transferred',
+}
+
+export enum SponsorshipType {
+  Company = 'Company',
+  Personal = 'Personal',
+}
+
+export enum VisaType {
+  WorkVisa = 'Work Visa',
+  FamilyVisa = 'Family Visa',
+  InvestorVisa = 'Investor Visa',
+}
 
 
 export interface Tenant {
   id: string;
   name: string;
+  subscriptionTier: SubscriptionTier;
 }
 
 export interface Permission {
@@ -66,10 +90,16 @@ export interface Employee {
   avatarUrl: string;
   managerId?: string;
   tenantId: string;
+  _candidateId?: string; // To link back to the candidate record upon conversion
   // Lifecycle properties
   contract?: ContractDetails;
   onboardingTasks?: OnboardingTask[];
   offboardingTasks?: OffboardingTask[];
+  // Qatar-specific compliance fields
+  status: EmployeeStatus;
+  sponsorship: SponsorshipType;
+  visaType: VisaType;
+  residencyStatus: string; // e.g., "Valid RP", "In Process"
 }
 
 export interface PayrollRun {
@@ -197,7 +227,7 @@ export interface JobOpening {
     tenantId: string;
 }
 
-export type CandidateStatus = 'Applied' | 'Screening' | 'Interview' | 'Offer' | 'Hired' | 'Rejected';
+export type CandidateStatus = 'Applied' | 'Screening' | 'Interview' | 'Offer' | 'Hired' | 'Rejected' | 'Converted';
 
 export interface Candidate {
     id: string;
@@ -213,21 +243,127 @@ export interface Candidate {
     tenantId: string;
 }
 
+export interface CompanyVehicle {
+    id: string;
+    make: string;
+    model: string;
+    year: number;
+    plateNumber: string;
+    registrationExpiry: string; // Istimara
+    insuranceExpiry: string;
+    assignedToEmployeeId?: string;
+    tenantId: string;
+}
+
+export interface VehicleLog {
+    id: string;
+    vehicleId: string;
+    vehicleName: string; // Denormalized
+    employeeId: string;
+    employeeName: string; // Denormalized
+    date: string;
+    startMileage: number;
+    endMileage: number;
+    purpose: string;
+    fuelCost?: number;
+    tenantId: string;
+}
+
+export interface PettyCashTransaction {
+    id: string;
+    department: Employee['department'];
+    employeeId: string;
+    employeeName: string;
+    date: string;
+    description: string;
+    type: 'Expense' | 'Reimbursement' | 'Top-up';
+    amount: number;
+    status: 'Pending' | 'Approved' | 'Rejected';
+    tenantId: string;
+}
+
+export interface PayslipEarnings {
+  basicSalary: number;
+  allowances: number;
+  leaveEncashment?: number;
+  gratuity?: number;
+  [key: string]: number | undefined; // For other earnings
+}
+
+export interface PayslipDeductions {
+  standardDeductions: number;
+  otherDeductions?: number;
+  [key: string]: number | undefined; // For other deductions
+}
+
+export interface PayslipData {
+    type: 'Monthly' | 'Leave' | 'Final Settlement';
+    employee: Employee;
+    companySettings: CompanySettings;
+    period: string;
+    payDate: string;
+    earnings: PayslipEarnings;
+    deductions: PayslipDeductions;
+    calculationDetails?: string[];
+}
+
+export interface AuditLog {
+    id: string;
+    timestamp: string;
+    userId: string;
+    userName: string;
+    action: string;
+    details: string;
+    tenantId: string;
+}
+
+export interface SupportTicket {
+    id: string;
+    userId: string;
+    userName: string;
+    subject: string;
+    description: string;
+    priority: 'Low' | 'Medium' | 'High';
+    status: 'Open' | 'In Progress' | 'Closed';
+    createdAt: string;
+    tenantId: string;
+}
+
+export interface KnowledgeBaseArticle {
+  id: string;
+  title: string;
+  content: string;
+  category: string;
+  createdAt: string;
+  updatedAt: string;
+  authorId: string;
+  authorName: string;
+  tenantId: string;
+}
+
+
 export enum View {
   Dashboard = 'Dashboard',
   Employees = 'Employees',
   EmployeeProfile = 'Employee Profile',
   OrganizationChart = 'Organization Chart',
+  Directory = 'Company Directory',
   Recruitment = 'Recruitment',
   Payroll = 'Payroll & WPS',
   TimeAttendance = 'Time & Attendance',
   Documents = 'Document Management',
   Assets = 'Asset Management',
+  VehicleManagement = 'Vehicle Management',
+  PettyCash = 'Petty Cash',
+  KnowledgeBase = 'Knowledge Base',
   LaborLawCompliance = 'Labor Law Compliance',
   AnalyticsReports = 'Analytics & Reports',
+  AuditTrail = 'Audit Trail',
   MyProfile = 'My Profile',
   Settings = 'Settings',
+  HelpSupport = 'Help & Support',
   EmployeeDashboard = 'My Dashboard',
+  ManagerDashboard = 'Manager Dashboard',
 }
 
 export interface ToastMessage {
@@ -242,11 +378,28 @@ export interface InviteUser {
     roleId: string;
 }
 
+export type Theme = 'light' | 'dark';
+
 export interface AppContextType {
-    openModal: (modal: 'addEmployee' | 'editEmployee' | 'deleteEmployee' | 'runPayroll' | 'viewPayslip' | 'requestLeave' | 'inviteUser' | 'editUser' | 'createRole' | 'editRole' | 'addJobOpening' | 'addCandidate', data?: any) => void;
+    openModal: (modal: 'addEmployee' | 'editEmployee' | 'deleteEmployee' | 'runPayroll' | 'viewWPSPayslip' | 'generatePayslip' | 'requestLeave' | 'inviteUser' | 'editUser' | 'createRole' | 'editRole' | 'addJobOpening' | 'addCandidate' | 'viewCandidate' | 'addMaintenance' | 'addVehicle' | 'addVehicleLog' | 'addPettyCash' | 'addArticle' | 'editArticle' | 'deleteArticle', data?: any) => void;
     closeModal: () => void;
     employees: Employee[] | null;
     refreshEmployees: () => Promise<void>;
     loading: boolean;
     currentUser: User | null;
+    tenant: Tenant | null;
+    refreshTenant: () => Promise<void>;
+    isManager: boolean;
+    theme: Theme;
+    toggleTheme: () => void;
+}
+
+export interface ContactRequest {
+  id: string;
+  company?: string;
+  name: string;
+  email: string;
+  phone?: string;
+  message?: string;
+  createdAt: string;
 }

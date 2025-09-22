@@ -3,34 +3,37 @@ import { Role, type InviteUser } from '../../types';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
 import { getRoles } from '../../services/api';
-import { useAppContext } from '../../AppContext';
 
 interface InviteUserModalProps {
   isOpen: boolean;
   onClose: () => void;
   onInvite: (newUser: InviteUser) => void;
   isSubmitting: boolean;
+  tenantId: string | undefined;
 }
 
-const InviteUserModal: React.FC<InviteUserModalProps> = ({ isOpen, onClose, onInvite, isSubmitting }) => {
+const formInputClasses = "mt-1 block w-full border border-border bg-secondary rounded-md shadow-sm p-2 text-foreground focus:ring-primary focus:border-primary";
+const formLabelClasses = "block text-sm font-medium text-muted-foreground";
+const formSelectClasses = `${formInputClasses} bg-secondary`;
+
+const InviteUserModal: React.FC<InviteUserModalProps> = ({ isOpen, onClose, onInvite, isSubmitting, tenantId }) => {
   const [formData, setFormData] = useState<InviteUser>({
     name: '',
     username: '',
     roleId: '',
   });
   const [roles, setRoles] = useState<Role[]>([]);
-  const { currentUser } = useAppContext();
 
   useEffect(() => {
-    if (isOpen && currentUser?.tenantId) {
-        getRoles(currentUser.tenantId).then(fetchedRoles => {
+    if (isOpen && tenantId) {
+        getRoles(tenantId).then(fetchedRoles => {
             setRoles(fetchedRoles);
             if (fetchedRoles.length > 0 && !formData.roleId) {
                 setFormData(prev => ({ ...prev, roleId: fetchedRoles.find(r => r.name === 'Employee')?.id || fetchedRoles[0].id }));
             }
         });
     }
-  }, [isOpen, currentUser, formData.roleId]);
+  }, [isOpen, tenantId, formData.roleId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -59,16 +62,16 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ isOpen, onClose, onIn
       <form id="invite-user-form" onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 gap-4">
             <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700">Full Name</label>
-                <input type="text" id="name" name="name" value={formData.name} onChange={handleChange} required className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+                <label htmlFor="name" className={formLabelClasses}>Full Name</label>
+                <input type="text" id="name" name="name" value={formData.name} onChange={handleChange} required className={formInputClasses} />
             </div>
             <div>
-                <label htmlFor="username" className="block text-sm font-medium text-gray-700">Username (Email)</label>
-                <input type="email" id="username" name="username" value={formData.username} onChange={handleChange} required className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+                <label htmlFor="username" className={formLabelClasses}>Username (Email)</label>
+                <input type="email" id="username" name="username" value={formData.username} onChange={handleChange} required className={formInputClasses} />
             </div>
             <div>
-                <label htmlFor="roleId" className="block text-sm font-medium text-gray-700">Role</label>
-                <select id="roleId" name="roleId" value={formData.roleId} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 bg-white">
+                <label htmlFor="roleId" className={formLabelClasses}>Role</label>
+                <select id="roleId" name="roleId" value={formData.roleId} onChange={handleChange} className={formSelectClasses}>
                 {roles.map(role => (
                     <option key={role.id} value={role.id}>{role.name}</option>
                 ))}

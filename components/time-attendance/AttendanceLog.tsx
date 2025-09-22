@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { getAttendanceRecords, getEmployees, addAttendanceRecord as apiAddRecord } from '../../services/api';
-import type { AttendanceRecord, Employee } from '../../types';
-import Button from '../common/Button';
-import PlusIcon from '../icons/PlusIcon';
-import AddAttendanceModal from './AddAttendanceModal';
-import LoadingSpinner from '../common/LoadingSpinner';
-import EmptyState from '../common/EmptyState';
-import { useAppContext } from '../../AppContext';
+import type { AttendanceRecord, Employee } from '../../types.ts';
+import Button from '../common/Button.tsx';
+import PlusIcon from '../icons/PlusIcon.tsx';
+import AddAttendanceModal from './AddAttendanceModal.tsx';
+import LoadingSpinner from '../common/LoadingSpinner.tsx';
+import EmptyState from '../common/EmptyState.tsx';
+import { useAppContext } from '../../AppContext.tsx';
+
+const formSelectClasses = "border border-border bg-secondary rounded-md shadow-sm p-2 text-foreground focus:ring-primary focus:border-primary text-sm";
+const formInputClasses = "border border-border bg-secondary rounded-md shadow-sm p-2 text-foreground focus:ring-primary focus:border-primary text-sm";
 
 const AttendanceLog: React.FC = () => {
     const [records, setRecords] = useState<AttendanceRecord[]>([]);
@@ -62,26 +65,26 @@ const AttendanceLog: React.FC = () => {
         <div className="space-y-4">
             <div className="flex justify-between items-center">
                 <div className="flex items-center space-x-4">
-                    <select name="employeeId" value={filters.employeeId} onChange={handleFilterChange} className="border border-gray-300 rounded-md shadow-sm p-2 bg-white">
+                    <select name="employeeId" value={filters.employeeId} onChange={handleFilterChange} className={formSelectClasses}>
                         <option value="all">All Employees</option>
                         {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.name}</option>)}
                     </select>
-                    <input type="date" name="startDate" value={filters.startDate} onChange={handleFilterChange} className="border border-gray-300 rounded-md shadow-sm p-2" />
-                    <input type="date" name="endDate" value={filters.endDate} onChange={handleFilterChange} className="border border-gray-300 rounded-md shadow-sm p-2" />
+                    <input type="date" name="startDate" value={filters.startDate} onChange={handleFilterChange} className={formInputClasses} />
+                    <input type="date" name="endDate" value={filters.endDate} onChange={handleFilterChange} className={formInputClasses} />
                 </div>
                  <Button onClick={() => setIsModalOpen(true)} icon={<PlusIcon />}>
                     Add Record
                 </Button>
             </div>
             
-             <div className="bg-brand-light rounded-lg shadow-md overflow-x-auto">
+             <div className="bg-card rounded-lg shadow-md overflow-x-auto border border-border">
                 {loading ? (
                     <LoadingSpinner />
                 ) : filteredRecords.length === 0 ? (
                      <EmptyState message="No Records Found" description={filters.employeeId !== 'all' || filters.startDate ? "Try adjusting your filters." : "Get started by adding an attendance record."} />
                 ) : (
-                    <table className="w-full text-sm text-left text-gray-500">
-                        <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+                    <table className="w-full text-sm text-left text-muted-foreground">
+                        <thead className="text-xs uppercase bg-secondary">
                             <tr>
                                 <th scope="col" className="px-6 py-3">Employee</th>
                                 <th scope="col" className="px-6 py-3">Date</th>
@@ -92,8 +95,8 @@ const AttendanceLog: React.FC = () => {
                         </thead>
                         <tbody>
                             {filteredRecords.map((record) => (
-                                <tr key={record.id} className="bg-white border-b hover:bg-gray-50">
-                                    <td className="px-6 py-4 font-semibold text-gray-900">{record.employeeName}</td>
+                                <tr key={record.id} className="border-b border-border hover:bg-muted/50">
+                                    <td className="px-6 py-4 font-semibold text-foreground">{record.employeeName}</td>
                                     <td className="px-6 py-4">{new Date(record.date).toLocaleDateString()}</td>
                                     <td className="px-6 py-4">{record.checkIn}</td>
                                     <td className="px-6 py-4">{record.checkOut}</td>

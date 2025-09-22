@@ -1,21 +1,28 @@
 import React, { useState } from 'react';
 import { getAssets, addAsset as apiAddAsset, updateAsset as apiUpdateAsset, getEmployees } from '../../services/api';
-import type { CompanyAsset } from '../../types';
-import Button from '../common/Button';
-import PlusIcon from '../icons/PlusIcon';
-import AssetTable from './AssetTable';
-import AddAssetModal from './AddAssetModal';
-import { useDataFetching } from '../../hooks/useDataFetching';
-import Tabs from '../common/Tabs';
-import AssetMaintenanceView from './AssetMaintenanceView';
-import { useAppContext } from '../../AppContext';
+import type { CompanyAsset, Employee } from '../../types';
+import Button from '../common/Button.tsx';
+import PlusIcon from '../icons/PlusIcon.tsx';
+import AssetTable from './AssetTable.tsx';
+import AddAssetModal from './AddAssetModal.tsx';
+import { useDataFetching } from '../../hooks/useDataFetching.tsx';
+import Tabs from '../common/Tabs.tsx';
+import AssetMaintenanceView from './AssetMaintenanceView.tsx';
+import { useAppContext } from '../../AppContext.tsx';
+import LoadingSpinner from '../common/LoadingSpinner.tsx';
 
 type TabId = 'list' | 'maintenance';
 
 const AssetView: React.FC = () => {
   const { currentUser } = useAppContext();
-  const { data: assets, loading: loadingAssets, refresh: fetchAssets } = useDataFetching(() => getAssets(currentUser!.tenantId));
-  const { data: employees, loading: loadingEmps } = useDataFetching(() => getEmployees(currentUser!.tenantId));
+  const { data: assets, loading: loadingAssets, refresh: fetchAssets } = useDataFetching(
+    currentUser ? `assets-${currentUser.tenantId}` : null,
+    () => getAssets(currentUser!.tenantId)
+  );
+  const { data: employees, loading: loadingEmps } = useDataFetching(
+    currentUser ? `employees-${currentUser.tenantId}` : null,
+    () => getEmployees(currentUser!.tenantId)
+  );
   
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<CompanyAsset | null>(null);
@@ -60,7 +67,7 @@ const AssetView: React.FC = () => {
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-brand-dark">Asset Management</h2>
+        <h2 className="text-xl font-semibold text-foreground">Asset Management</h2>
         {activeTab === 'list' && (
             <Button onClick={handleOpenAddModal} icon={<PlusIcon />}>
               Add New Asset
@@ -72,11 +79,16 @@ const AssetView: React.FC = () => {
 
       <div className="mt-4">
         {loading ? (
-          <div className="flex items-center justify-center h-64"><p>Loading assets...</p></div>
+          <LoadingSpinner />
         ) : activeTab === 'list' ? (
-          <AssetTable assets={assets || []} onEdit={handleOpenEditModal} />
+          <AssetTable 
+            assets={assets || []} 
+            employees={employees || []} 
+            onEdit={handleOpenEditModal} 
+            onAdd={handleOpenAddModal}
+          />
         ) : (
-          <AssetMaintenanceView />
+          <AssetMaintenanceView assets={assets || []} />
         )}
       </div>
       

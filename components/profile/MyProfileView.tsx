@@ -1,11 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import type { User, Employee } from '../../types';
 import { getEmployeeById, updateEmployee } from '../../services/api';
-import Button from '../common/Button';
+import Button from '../common/Button.tsx';
 
 interface MyProfileViewProps {
   user: User;
 }
+
+const formInputClasses = "mt-1 block w-full border border-border bg-secondary rounded-md shadow-sm p-2 text-foreground focus:ring-primary focus:border-primary";
+const formLabelClasses = "block text-sm font-medium text-muted-foreground";
+const formInputDisabledClasses = "mt-1 block w-full border border-border rounded-md shadow-sm p-2 bg-muted text-muted-foreground cursor-not-allowed";
 
 const MyProfileView: React.FC<MyProfileViewProps> = ({ user }) => {
   const [employee, setEmployee] = useState<Employee | null>(null);
@@ -69,43 +73,43 @@ const MyProfileView: React.FC<MyProfileViewProps> = ({ user }) => {
   return (
     <div className="p-6">
         <div className="max-w-4xl mx-auto">
-            <h2 className="text-xl font-semibold text-brand-dark mb-6">My Profile</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-6">My Profile</h2>
              <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Personal Information Card */}
-                    <div className="bg-brand-light p-6 rounded-lg shadow-md">
-                        <h3 className="text-lg font-semibold text-brand-dark border-b pb-2 mb-4">Personal Information</h3>
+                    <div className="bg-card p-6 rounded-lg shadow-md border border-border">
+                        <h3 className="text-lg font-semibold text-foreground border-b border-border pb-2 mb-4">Personal Information</h3>
                         <div className="space-y-4">
                             <div>
-                                <label htmlFor="name" className="block text-sm font-medium text-gray-700">Full Name</label>
-                                <input type="text" id="name" name="name" value={formData.name || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+                                <label htmlFor="name" className={formLabelClasses}>Full Name</label>
+                                <input type="text" id="name" name="name" value={formData.name || ''} onChange={handleChange} className={formInputClasses} />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-500">Qatar ID (QID)</label>
-                                <input type="text" value={employee.qid} readOnly className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 bg-gray-100 cursor-not-allowed" />
+                                <label className={formLabelClasses}>Qatar ID (QID)</label>
+                                <input type="text" value={employee.qid} readOnly className={formInputDisabledClasses} />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-500">Position</label>
-                                <input type="text" value={employee.position} readOnly className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 bg-gray-100 cursor-not-allowed" />
+                                <label className={formLabelClasses}>Position</label>
+                                <input type="text" value={employee.position} readOnly className={formInputDisabledClasses} />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-500">Department</label>
-                                <input type="text" value={employee.department} readOnly className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 bg-gray-100 cursor-not-allowed" />
+                                <label className={formLabelClasses}>Department</label>
+                                <input type="text" value={employee.department} readOnly className={formInputDisabledClasses} />
                             </div>
                         </div>
                     </div>
 
                     {/* Bank Details Card */}
-                     <div className="bg-brand-light p-6 rounded-lg shadow-md">
-                        <h3 className="text-lg font-semibold text-brand-dark border-b pb-2 mb-4">Bank Details</h3>
+                     <div className="bg-card p-6 rounded-lg shadow-md border border-border">
+                        <h3 className="text-lg font-semibold text-foreground border-b border-border pb-2 mb-4">Bank Details</h3>
                          <div className="space-y-4">
                             <div>
-                                <label htmlFor="bankName" className="block text-sm font-medium text-gray-700">Bank Name</label>
-                                <input type="text" id="bankName" name="bankName" value={formData.bankName || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+                                <label htmlFor="bankName" className={formLabelClasses}>Bank Name</label>
+                                <input type="text" id="bankName" name="bankName" value={formData.bankName || ''} onChange={handleChange} className={formInputClasses} />
                             </div>
                              <div>
-                                <label htmlFor="iban" className="block text-sm font-medium text-gray-700">IBAN</label>
-                                <input type="text" id="iban" name="iban" value={formData.iban || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+                                <label htmlFor="iban" className={formLabelClasses}>IBAN</label>
+                                <input type="text" id="iban" name="iban" value={formData.iban || ''} onChange={handleChange} className={formInputClasses} />
                             </div>
                          </div>
                     </div>

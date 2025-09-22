@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import type { Employee, EmployeeDocument } from '../../types';
-import Modal from '../common/Modal';
-import Button from '../common/Button';
-import { useToasts } from '../../hooks/useToasts';
+import Modal from '../common/Modal.tsx';
+import Button from '../common/Button.tsx';
+import { useToasts } from '../../hooks/useToasts.tsx';
 
 interface AddDocumentModalProps {
   isOpen: boolean;
@@ -11,6 +11,10 @@ interface AddDocumentModalProps {
   employees: Employee[];
   isSubmitting: boolean;
 }
+
+const formInputClasses = "mt-1 block w-full border border-border bg-secondary rounded-md shadow-sm p-2 text-foreground focus:ring-primary focus:border-primary";
+const formLabelClasses = "block text-sm font-medium text-muted-foreground";
+const formSelectClasses = `${formInputClasses} bg-secondary`;
 
 const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, onAddDocument, employees, isSubmitting }) => {
   const [formData, setFormData] = useState({
@@ -30,7 +34,6 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
   }, [isOpen, employees]);
 
   useEffect(() => {
-      // FIX: Use ReturnType<typeof setInterval> for browser compatibility instead of NodeJS.Timeout.
       let interval: ReturnType<typeof setInterval>;
       if (isSubmitting) {
           interval = setInterval(() => {
@@ -99,16 +102,16 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
         <form id="add-document-form" onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label htmlFor="doc-employeeId" className="block text-sm font-medium text-gray-700">Employee</label>
-                    <select id="doc-employeeId" name="employeeId" value={formData.employeeId} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 bg-white">
+                    <label htmlFor="doc-employeeId" className={formLabelClasses}>Employee</label>
+                    <select id="doc-employeeId" name="employeeId" value={formData.employeeId} onChange={handleChange} className={formSelectClasses}>
                     {employees.map(emp => (
                         <option key={emp.id} value={emp.id}>{emp.name}</option>
                     ))}
                     </select>
                 </div>
                  <div>
-                    <label htmlFor="documentType" className="block text-sm font-medium text-gray-700">Document Type</label>
-                    <select id="documentType" name="documentType" value={formData.documentType} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 bg-white">
+                    <label htmlFor="documentType" className={formLabelClasses}>Document Type</label>
+                    <select id="documentType" name="documentType" value={formData.documentType} onChange={handleChange} className={formSelectClasses}>
                         <option>QID</option>
                         <option>Passport</option>
                         <option>Visa</option>
@@ -117,39 +120,39 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                     </select>
                 </div>
                 <div>
-                    <label htmlFor="issueDate" className="block text-sm font-medium text-gray-700">Issue Date</label>
-                    <input type="date" id="issueDate" name="issueDate" value={formData.issueDate} onChange={handleChange} required className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+                    <label htmlFor="issueDate" className={formLabelClasses}>Issue Date</label>
+                    <input type="date" id="issueDate" name="issueDate" value={formData.issueDate} onChange={handleChange} required className={formInputClasses} />
                 </div>
                 <div>
-                    <label htmlFor="expiryDate" className="block text-sm font-medium text-gray-700">Expiry Date</label>
-                    <input type="date" id="expiryDate" name="expiryDate" value={formData.expiryDate} required onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+                    <label htmlFor="expiryDate" className={formLabelClasses}>Expiry Date</label>
+                    <input type="date" id="expiryDate" name="expiryDate" value={formData.expiryDate} required onChange={handleChange} className={formInputClasses} />
                 </div>
             </div>
             
             <div>
-                <label className="block text-sm font-medium text-gray-700">Document File</label>
-                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                <label className={formLabelClasses}>Document File</label>
+                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-border border-dashed rounded-md">
                     <div className="space-y-1 text-center">
-                        <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                        <svg className="mx-auto h-12 w-12 text-muted-foreground" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
                             <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
-                        <div className="flex text-sm text-gray-600">
-                            <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-brand-primary hover:text-blue-700 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-brand-primary">
+                        <div className="flex text-sm text-muted-foreground">
+                            <label htmlFor="file-upload" className="relative cursor-pointer bg-card rounded-md font-medium text-primary dark:text-blue-400 hover:text-primary/90 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary">
                                 <span>Upload a file</span>
                                 <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleFileChange} />
                             </label>
                             <p className="pl-1">or drag and drop</p>
                         </div>
-                        <p className="text-xs text-gray-500">PDF, PNG, JPG up to 10MB</p>
+                        <p className="text-xs text-muted-foreground/80">PDF, PNG, JPG up to 10MB</p>
                     </div>
                 </div>
-                {file && <p className="mt-2 text-sm text-gray-500">Selected file: {file.name}</p>}
+                {file && <p className="mt-2 text-sm text-muted-foreground">{`Selected file: ${file.name}`}</p>}
             </div>
 
             {isSubmitting && (
                 <div>
-                    <div className="w-full bg-gray-200 rounded-full h-2.5">
-                        <div className="bg-brand-primary h-2.5 rounded-full transition-all duration-150" style={{ width: `${uploadProgress}%` }}></div>
+                    <div className="w-full bg-secondary rounded-full h-2.5">
+                        <div className="bg-primary dark:bg-blue-400 h-2.5 rounded-full transition-all duration-150" style={{ width: `${uploadProgress}%` }}></div>
                     </div>
                 </div>
             )}

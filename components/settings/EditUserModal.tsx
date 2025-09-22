@@ -13,6 +13,10 @@ interface EditUserModalProps {
   tenantId: string | undefined;
 }
 
+const formInputClasses = "mt-1 block w-full border border-border bg-secondary rounded-md shadow-sm p-2 text-foreground focus:ring-primary focus:border-primary";
+const formLabelClasses = "block text-sm font-medium text-muted-foreground";
+const formSelectClasses = `${formInputClasses} bg-secondary`;
+
 const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, onUpdate, user, isSubmitting, tenantId }) => {
   const [formData, setFormData] = useState<{ name: string; roleId: string }>({ name: '', roleId: '' });
   const [roles, setRoles] = useState<Role[]>([]);
@@ -46,7 +50,6 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, onUpdate
         name: formData.name,
         role: selectedRole,
     });
-    user.onUpdate(); // Trigger refresh on the parent component
   };
   
   const modalFooter = (
@@ -60,12 +63,12 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, onUpdate
     <Modal isOpen={isOpen} onClose={onClose} title={`Edit User: ${user?.user.name}`} footer={modalFooter}>
       <form id="edit-user-form" onSubmit={handleSubmit} className="space-y-4">
         <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700">Full Name</label>
-            <input type="text" id="name" name="name" value={formData.name} onChange={handleChange} required className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+            <label htmlFor="name" className={formLabelClasses}>Full Name</label>
+            <input type="text" id="name" name="name" value={formData.name} onChange={handleChange} required className={formInputClasses} />
         </div>
         <div>
-            <label htmlFor="roleId" className="block text-sm font-medium text-gray-700">Role</label>
-            <select id="roleId" name="roleId" value={formData.roleId} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 bg-white">
+            <label htmlFor="roleId" className={formLabelClasses}>Role</label>
+            <select id="roleId" name="roleId" value={formData.roleId} onChange={handleChange} className={formSelectClasses}>
                 {roles.map(role => (
                     <option key={role.id} value={role.id}>{role.name}</option>
                 ))}

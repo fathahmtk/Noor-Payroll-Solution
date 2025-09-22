@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
-import AttendanceLog from './AttendanceLog';
-import LeaveRequests from './LeaveRequests';
-import LeaveBalances from './LeaveBalances';
-import Tabs from '../common/Tabs';
+import AttendanceLog from './AttendanceLog.tsx';
+import LeaveRequests from './LeaveRequests.tsx';
+import LeaveBalances from './LeaveBalances.tsx';
+import Tabs from '../common/Tabs.tsx';
 
 type TabId = 'log' | 'requests' | 'balances';
 
@@ -18,7 +17,7 @@ const TimeAttendanceView: React.FC = () => {
 
     return (
         <div className="p-6 space-y-6">
-            <h2 className="text-xl font-semibold text-brand-dark">Time & Attendance</h2>
+            <h2 className="text-xl font-semibold text-foreground">Time &amp; Attendance</h2>
             
             <Tabs<TabId> tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
 

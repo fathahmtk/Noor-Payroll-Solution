@@ -7,32 +7,30 @@ import DepartmentSalaryChart from './DepartmentSalaryChart';
 import HeadcountChart from './HeadcountChart';
 import LeaveTypeChart from './LeaveTypeChart';
 import { useAppContext } from '../../AppContext';
+import { useDataFetching } from '../../hooks/useDataFetching';
+import LoadingSpinner from '../common/LoadingSpinner';
 
 const AnalyticsDashboard: React.FC = () => {
-    const [employees, setEmployees] = useState<Employee[]>([]);
-    const [payrollRuns, setPayrollRuns] = useState<PayrollRun[]>([]);
-    const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
-    const [loading, setLoading] = useState(true);
     const { currentUser } = useAppContext();
 
-    useEffect(() => {
-        const fetchData = async () => {
-            if (!currentUser?.tenantId) return;
-            setLoading(true);
-            const [empData, payrollData, leaveData] = await Promise.all([
-                getEmployees(currentUser.tenantId),
-                getPayrollRuns(currentUser.tenantId),
-                getLeaveRequests(currentUser.tenantId),
-            ]);
-            setEmployees(empData);
-            setPayrollRuns(payrollData);
-            setLeaveRequests(leaveData);
-            setLoading(false);
-        };
-        fetchData();
-    }, [currentUser]);
+    const { data: employees, loading: loadingEmployees } = useDataFetching(
+        currentUser ? `employees-${currentUser.tenantId}` : null,
+        () => getEmployees(currentUser!.tenantId)
+    );
+    const { data: payrollRuns, loading: loadingPayroll } = useDataFetching(
+        currentUser ? `payrollRuns-${currentUser.tenantId}` : null,
+        () => getPayrollRuns(currentUser!.tenantId)
+    );
+    const { data: leaveRequests, loading: loadingLeave } = useDataFetching(
+        currentUser ? `leaveRequests-${currentUser.tenantId}` : null,
+        () => getLeaveRequests(currentUser!.tenantId)
+    );
+
+    const loading = loadingEmployees || loadingPayroll || loadingLeave;
+
 
     const departmentSalaryData = useMemo(() => {
+        if (!employees) return [];
         const deptMap = new Map<string, number>();
         employees.forEach(emp => {
             const totalSalary = emp.basicSalary + emp.allowances;
@@ -42,7 +40,7 @@ const AnalyticsDashboard: React.FC = () => {
     }, [employees]);
     
     const headcountData = useMemo(() => {
-        if (employees.length === 0) return [];
+        if (!employees || employees.length === 0) return [];
         const sortedEmployees = [...employees].sort((a, b) => new Date(a.joinDate).getTime() - new Date(b.joinDate).getTime());
         const dataMap = new Map<string, number>();
         let count = 0;
@@ -67,6 +65,7 @@ const AnalyticsDashboard: React.FC = () => {
     }, [employees]);
 
     const leaveTypeData = useMemo(() => {
+        if (!leaveRequests) return [];
         const typeMap = new Map<string, number>();
         leaveRequests.forEach(req => {
             typeMap.set(req.leaveType, (typeMap.get(req.leaveType) || 0) + 1);
@@ -75,12 +74,12 @@ const AnalyticsDashboard: React.FC = () => {
     }, [leaveRequests]);
 
     if (loading) {
-        return <div className="text-center py-10">Loading analytics dashboard...</div>;
+        return <LoadingSpinner />;
     }
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <PayrollCostChart data={payrollRuns} />
+            <PayrollCostChart data={payrollRuns || []} />
             <DepartmentSalaryChart data={departmentSalaryData} />
             <HeadcountChart data={headcountData} />
             <LeaveTypeChart data={leaveTypeData} />

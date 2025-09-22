@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import CompanySettingsForm from './CompanySettingsForm';
-import UserManagement from './UserManagement';
-import Tabs from '../common/Tabs';
-import RoleManagementView from './RoleManagementView';
+import CompanySettingsForm from './CompanySettingsForm.tsx';
+import UserManagement from './UserManagement.tsx';
+import Tabs from '../common/Tabs.tsx';
+import RoleManagementView from './RoleManagementView.tsx';
+import SubscriptionView from './SubscriptionView.tsx';
 
-type TabId = 'company' | 'users' | 'roles';
+type TabId = 'company' | 'users' | 'roles' | 'subscription';
 
 const SettingsView: React.FC = () => {
     const [activeTab, setActiveTab] = useState<TabId>('company');
@@ -13,10 +14,11 @@ const SettingsView: React.FC = () => {
         { id: 'company', label: 'Company Settings' },
         { id: 'users', label: 'User Management' },
         { id: 'roles', label: 'Roles & Permissions' },
+        { id: 'subscription', label: 'Subscription & Billing' },
     ];
 
     return (
-        <div className="p-6">
+        <div className="p-6 bg-background text-foreground">
             <div className="max-w-4xl mx-auto">
                 <Tabs<TabId> tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
                 
@@ -24,6 +26,7 @@ const SettingsView: React.FC = () => {
                     {activeTab === 'company' && <CompanySettingsForm />}
                     {activeTab === 'users' && <UserManagement />}
                     {activeTab === 'roles' && <RoleManagementView />}
+                    {activeTab === 'subscription' && <SubscriptionView />}
                 </div>
             </div>
         </div>

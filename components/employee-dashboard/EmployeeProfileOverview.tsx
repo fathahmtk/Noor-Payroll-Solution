@@ -8,16 +8,16 @@ interface EmployeeProfileOverviewProps {
 }
 
 const InfoCard: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
-    <div className="bg-brand-light p-6 rounded-lg shadow-md">
-        <h3 className="text-lg font-semibold text-brand-dark border-b pb-2 mb-4">{title}</h3>
+    <div className="bg-card p-6 rounded-lg shadow-md border border-border">
+        <h3 className="text-lg font-semibold text-foreground border-b border-border pb-2 mb-4">{title}</h3>
         <div className="space-y-3">{children}</div>
     </div>
 );
 
 const InfoRow: React.FC<{ label: string; value: string | number }> = ({ label, value }) => (
     <div className="flex justify-between items-center text-sm">
-        <p className="text-gray-500">{label}</p>
-        <p className="font-semibold text-brand-dark">{value}</p>
+        <p className="text-muted-foreground">{label}</p>
+        <p className="font-semibold text-foreground">{value}</p>
     </div>
 );
 
@@ -34,9 +34,9 @@ const EmployeeProfileOverview: React.FC<EmployeeProfileOverviewProps> = ({ user,
                 <InfoCard title="Salary & Bank Details">
                     <InfoRow label="Basic Salary" value={`QAR ${employee.basicSalary.toLocaleString()}`} />
                     <InfoRow label="Allowances" value={`QAR ${employee.allowances.toLocaleString()}`} />
-                    <div className="border-t my-2"></div>
+                    <div className="border-t border-border my-2"></div>
                     <InfoRow label="Total Monthly Salary" value={`QAR ${(employee.basicSalary + employee.allowances).toLocaleString()}`} />
-                    <div className="border-t my-2"></div>
+                    <div className="border-t border-border my-2"></div>
                     <InfoRow label="Bank Name" value={employee.bankName} />
                     <InfoRow label="IBAN" value={employee.iban} />
                 </InfoCard>

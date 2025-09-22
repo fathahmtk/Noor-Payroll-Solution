@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import type { Employee, AttendanceRecord } from '../../types';
-import Modal from '../common/Modal';
-import Button from '../common/Button';
-import { useToasts } from '../../hooks/useToasts';
+import type { Employee, AttendanceRecord } from '../../types.ts';
+import Modal from '../common/Modal.tsx';
+import Button from '../common/Button.tsx';
+import { useToasts } from '../../hooks/useToasts.tsx';
 
 interface AddAttendanceModalProps {
   isOpen: boolean;
@@ -11,6 +11,10 @@ interface AddAttendanceModalProps {
   employees: Employee[];
   isSubmitting: boolean;
 }
+
+const formInputClasses = "mt-1 block w-full border border-border bg-secondary rounded-md shadow-sm p-2 text-foreground focus:ring-primary focus:border-primary";
+const formLabelClasses = "block text-sm font-medium text-muted-foreground";
+const formSelectClasses = `${formInputClasses} bg-secondary`;
 
 const AddAttendanceModal: React.FC<AddAttendanceModalProps> = ({ isOpen, onClose, onAddRecord, employees, isSubmitting }) => {
   const [formData, setFormData] = useState({
@@ -57,24 +61,24 @@ const AddAttendanceModal: React.FC<AddAttendanceModalProps> = ({ isOpen, onClose
       <form id="add-attendance-form" onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-                <label htmlFor="employeeId" className="block text-sm font-medium text-gray-700">Employee</label>
-                <select id="employeeId" name="employeeId" value={formData.employeeId} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 bg-white">
+                <label htmlFor="employeeId" className={formLabelClasses}>Employee</label>
+                <select id="employeeId" name="employeeId" value={formData.employeeId} onChange={handleChange} className={formSelectClasses}>
                 {employees.map(emp => (
                     <option key={emp.id} value={emp.id}>{emp.name}</option>
                 ))}
                 </select>
             </div>
              <div>
-                <label htmlFor="date" className="block text-sm font-medium text-gray-700">Date</label>
-                <input type="date" id="date" name="date" value={formData.date} onChange={handleChange} required className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+                <label htmlFor="date" className={formLabelClasses}>Date</label>
+                <input type="date" id="date" name="date" value={formData.date} onChange={handleChange} required className={formInputClasses} />
             </div>
             <div>
-                <label htmlFor="checkIn" className="block text-sm font-medium text-gray-700">Check-in Time</label>
-                <input type="time" id="checkIn" name="checkIn" value={formData.checkIn} onChange={handleChange} required className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+                <label htmlFor="checkIn" className={formLabelClasses}>Check-in Time</label>
+                <input type="time" id="checkIn" name="checkIn" value={formData.checkIn} onChange={handleChange} required className={formInputClasses} />
             </div>
             <div>
-                <label htmlFor="checkOut" className="block text-sm font-medium text-gray-700">Check-out Time</label>
-                <input type="time" id="checkOut" name="checkOut" value={formData.checkOut} onChange={handleChange} required className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+                <label htmlFor="checkOut" className={formLabelClasses}>Check-out Time</label>
+                <input type="time" id="checkOut" name="checkOut" value={formData.checkOut} onChange={handleChange} required className={formInputClasses} />
             </div>
         </div>
       </form>

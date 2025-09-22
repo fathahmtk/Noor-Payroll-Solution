@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Employee, CompanyAsset } from '../../types';
-import Modal from '../common/Modal';
-import Button from '../common/Button';
+import Modal from '../common/Modal.tsx';
+import Button from '../common/Button.tsx';
 
 interface AddAssetModalProps {
   isOpen: boolean;
@@ -11,6 +11,10 @@ interface AddAssetModalProps {
   isSubmitting: boolean;
   assetToEdit?: CompanyAsset | null;
 }
+
+const formInputClasses = "mt-1 block w-full border border-border bg-secondary rounded-md shadow-sm p-2 text-foreground focus:ring-primary focus:border-primary";
+const formLabelClasses = "block text-sm font-medium text-muted-foreground";
+const formSelectClasses = `${formInputClasses} bg-secondary`;
 
 const getInitialState = (): Omit<CompanyAsset, 'id' | 'tenantId'> => ({
     assetTag: '',
@@ -83,78 +87,78 @@ const AddAssetModal: React.FC<AddAssetModalProps> = ({ isOpen, onClose, onSubmit
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={isEditMode ? "Edit Asset Details" : "Add New Asset"} footer={modalFooter}>
       <form id="add-asset-form" onSubmit={handleSubmit} className="space-y-6">
-        <div className="p-4 border rounded-md">
-            <h4 className="font-semibold mb-2 text-gray-600">Asset Details</h4>
+        <div className="p-4 border border-border rounded-md">
+            <h4 className="font-semibold mb-2 text-muted-foreground">Asset Details</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label htmlFor="assetTag" className="block text-sm font-medium text-gray-700">Asset Tag</label>
-                    <input type="text" id="assetTag" name="assetTag" value={formData.assetTag || ''} onChange={handleChange} required className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" placeholder="e.g., QT-LAP-003"/>
+                    <label htmlFor="assetTag" className={formLabelClasses}>Asset Tag</label>
+                    <input type="text" id="assetTag" name="assetTag" value={formData.assetTag || ''} onChange={handleChange} required className={formInputClasses} placeholder="e.g., QT-LAP-003"/>
                 </div>
                 <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">Asset Name</label>
-                    <input type="text" id="name" name="name" value={formData.name || ''} onChange={handleChange} required className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" placeholder="e.g., MacBook Pro 14"/>
+                    <label htmlFor="name" className={formLabelClasses}>Asset Name</label>
+                    <input type="text" id="name" name="name" value={formData.name || ''} onChange={handleChange} required className={formInputClasses} placeholder="e.g., MacBook Pro 14"/>
                 </div>
                 <div>
-                    <label htmlFor="category" className="block text-sm font-medium text-gray-700">Category</label>
-                    <select id="category" name="category" value={formData.category || 'IT Equipment'} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 bg-white">
+                    <label htmlFor="category" className={formLabelClasses}>Category</label>
+                    <select id="category" name="category" value={formData.category || 'IT Equipment'} onChange={handleChange} className={formSelectClasses}>
                         <option>IT Equipment</option><option>Furniture</option><option>Vehicle</option><option>Other</option>
                     </select>
                 </div>
                 <div>
-                    <label htmlFor="serialNumber" className="block text-sm font-medium text-gray-700">Serial Number</label>
-                    <input type="text" id="serialNumber" name="serialNumber" value={formData.serialNumber || ''} onChange={handleChange} required className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+                    <label htmlFor="serialNumber" className={formLabelClasses}>Serial Number</label>
+                    <input type="text" id="serialNumber" name="serialNumber" value={formData.serialNumber || ''} onChange={handleChange} required className={formInputClasses} />
                 </div>
             </div>
         </div>
 
-        <div className="p-4 border rounded-md">
-            <h4 className="font-semibold mb-2 text-gray-600">Purchase & Warranty</h4>
+        <div className="p-4 border border-border rounded-md">
+            <h4 className="font-semibold mb-2 text-muted-foreground">Purchase & Warranty</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  <div>
-                    <label htmlFor="purchaseDate" className="block text-sm font-medium text-gray-700">Purchase Date</label>
-                    <input type="date" id="purchaseDate" name="purchaseDate" value={formData.purchaseDate || ''} onChange={handleChange} required className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+                    <label htmlFor="purchaseDate" className={formLabelClasses}>Purchase Date</label>
+                    <input type="date" id="purchaseDate" name="purchaseDate" value={formData.purchaseDate || ''} onChange={handleChange} required className={formInputClasses} />
                 </div>
                  <div>
-                    <label htmlFor="vendor" className="block text-sm font-medium text-gray-700">Vendor</label>
-                    <input type="text" id="vendor" name="vendor" value={formData.vendor || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+                    <label htmlFor="vendor" className={formLabelClasses}>Vendor</label>
+                    <input type="text" id="vendor" name="vendor" value={formData.vendor || ''} onChange={handleChange} className={formInputClasses} />
                 </div>
                 <div>
-                    <label htmlFor="purchaseCost" className="block text-sm font-medium text-gray-700">Purchase Cost (QAR)</label>
-                    <input type="number" step="0.01" id="purchaseCost" name="purchaseCost" value={formData.purchaseCost ?? ''} onChange={handleChange} required className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+                    <label htmlFor="purchaseCost" className={formLabelClasses}>Purchase Cost (QAR)</label>
+                    <input type="number" step="0.01" id="purchaseCost" name="purchaseCost" value={formData.purchaseCost ?? ''} onChange={handleChange} required className={formInputClasses} />
                 </div>
                 <div>
-                    <label htmlFor="warrantyEndDate" className="block text-sm font-medium text-gray-700">Warranty End Date</label>
-                    <input type="date" id="warrantyEndDate" name="warrantyEndDate" value={formData.warrantyEndDate || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+                    <label htmlFor="warrantyEndDate" className={formLabelClasses}>Warranty End Date</label>
+                    <input type="date" id="warrantyEndDate" name="warrantyEndDate" value={formData.warrantyEndDate || ''} onChange={handleChange} className={formInputClasses} />
                 </div>
             </div>
         </div>
 
-        <div className="p-4 border rounded-md">
-            <h4 className="font-semibold mb-2 text-gray-600">Depreciation</h4>
+        <div className="p-4 border border-border rounded-md">
+            <h4 className="font-semibold mb-2 text-muted-foreground">Depreciation</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                    <label htmlFor="depreciationMethod" className="block text-sm font-medium text-gray-700">Method</label>
-                    <select id="depreciationMethod" name="depreciationMethod" value={formData.depreciationMethod || 'None'} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 bg-white">
+                    <label htmlFor="depreciationMethod" className={formLabelClasses}>Method</label>
+                    <select id="depreciationMethod" name="depreciationMethod" value={formData.depreciationMethod || 'None'} onChange={handleChange} className={formSelectClasses}>
                         <option>Straight-line</option><option>None</option>
                     </select>
                 </div>
                  <div>
-                    <label htmlFor="usefulLifeMonths" className="block text-sm font-medium text-gray-700">Useful Life (Months)</label>
-                    <input type="number" id="usefulLifeMonths" name="usefulLifeMonths" value={formData.usefulLifeMonths ?? ''} onChange={handleChange} required className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+                    <label htmlFor="usefulLifeMonths" className={formLabelClasses}>Useful Life (Months)</label>
+                    <input type="number" id="usefulLifeMonths" name="usefulLifeMonths" value={formData.usefulLifeMonths ?? ''} onChange={handleChange} required className={formInputClasses} />
                 </div>
                  <div>
-                    <label htmlFor="residualValue" className="block text-sm font-medium text-gray-700">Residual Value (QAR)</label>
-                    <input type="number" step="0.01" id="residualValue" name="residualValue" value={formData.residualValue ?? ''} onChange={handleChange} required className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+                    <label htmlFor="residualValue" className={formLabelClasses}>Residual Value (QAR)</label>
+                    <input type="number" step="0.01" id="residualValue" name="residualValue" value={formData.residualValue ?? ''} onChange={handleChange} required className={formInputClasses} />
                 </div>
             </div>
         </div>
         
-        <div className="p-4 border rounded-md">
-            <h4 className="font-semibold mb-2 text-gray-600">Assignment & Status</h4>
+        <div className="p-4 border border-border rounded-md">
+            <h4 className="font-semibold mb-2 text-muted-foreground">Assignment & Status</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label htmlFor="assignedToEmployeeId" className="block text-sm font-medium text-gray-700">Assigned To</label>
-                    <select id="assignedToEmployeeId" name="assignedToEmployeeId" value={formData.assignedToEmployeeId || ''} onChange={handleAssignmentChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 bg-white">
+                    <label htmlFor="assignedToEmployeeId" className={formLabelClasses}>Assigned To</label>
+                    <select id="assignedToEmployeeId" name="assignedToEmployeeId" value={formData.assignedToEmployeeId || ''} onChange={handleAssignmentChange} className={formSelectClasses}>
                         <option value="">-- Unassigned --</option>
                         {employees.map(emp => (
                             <option key={emp.id} value={emp.id}>{emp.name}</option>
@@ -162,8 +166,8 @@ const AddAssetModal: React.FC<AddAssetModalProps> = ({ isOpen, onClose, onSubmit
                     </select>
                 </div>
                 <div>
-                    <label htmlFor="status" className="block text-sm font-medium text-gray-700">Status</label>
-                    <select id="status" name="status" value={formData.status || 'Available'} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 bg-white">
+                    <label htmlFor="status" className={formLabelClasses}>Status</label>
+                    <select id="status" name="status" value={formData.status || 'Available'} onChange={handleChange} className={formSelectClasses}>
                         <option>Available</option><option>Assigned</option><option>In Repair</option><option>Retired</option>
                     </select>
                 </div>

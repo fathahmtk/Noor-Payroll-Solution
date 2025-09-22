@@ -12,6 +12,10 @@ interface AddJobOpeningModalProps {
   onUpdate: () => void;
 }
 
+const formInputClasses = "mt-1 block w-full border border-border bg-secondary rounded-md shadow-sm p-2 text-foreground focus:ring-primary focus:border-primary";
+const formLabelClasses = "block text-sm font-medium text-muted-foreground";
+const formSelectClasses = `${formInputClasses} bg-secondary`;
+
 const initialState = {
     title: '',
     department: 'Engineering' as Employee['department'],
@@ -40,7 +44,6 @@ const AddJobOpeningModal: React.FC<AddJobOpeningModalProps> = ({ isOpen, onClose
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onAddJob(formData);
-    onUpdate();
   };
   
   const handleClose = () => {
@@ -60,22 +63,22 @@ const AddJobOpeningModal: React.FC<AddJobOpeningModalProps> = ({ isOpen, onClose
       <form id="add-job-form" onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-                <label htmlFor="title" className="block text-sm font-medium text-gray-700">Job Title</label>
-                <input type="text" id="title" name="title" value={formData.title} onChange={handleChange} required className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+                <label htmlFor="title" className={formLabelClasses}>Job Title</label>
+                <input type="text" id="title" name="title" value={formData.title} onChange={handleChange} required className={formInputClasses} />
             </div>
             <div>
-                <label htmlFor="department" className="block text-sm font-medium text-gray-700">Department</label>
-                <select id="department" name="department" value={formData.department} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 bg-white">
+                <label htmlFor="department" className={formLabelClasses}>Department</label>
+                <select id="department" name="department" value={formData.department} onChange={handleChange} className={formSelectClasses}>
                     <option>Engineering</option><option>HR</option><option>Marketing</option><option>Sales</option><option>Finance</option>
                 </select>
             </div>
         </div>
         <div>
             <div className="flex justify-between items-center mb-1">
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700">Job Description</label>
+                <label htmlFor="description" className={formLabelClasses}>Job Description</label>
                 <Button variant="secondary" size="sm" onClick={handleGenerateDescription} isLoading={isGenerating}>Generate with Gemini</Button>
             </div>
-            <textarea id="description" name="description" value={formData.description} onChange={handleChange} rows={6} required className="block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+            <textarea id="description" name="description" value={formData.description} onChange={handleChange} rows={6} required className={formInputClasses} />
         </div>
       </form>
     </Modal>

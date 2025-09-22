@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import type { Employee } from '../../types';
-import Modal from '../common/Modal';
-import Button from '../common/Button';
+import type { Employee } from '../../types.ts';
+import Modal from '../common/Modal.tsx';
+import Button from '../common/Button.tsx';
 import EmployeeFormFields from './EmployeeFormFields';
 
 interface EditEmployeeModalProps {

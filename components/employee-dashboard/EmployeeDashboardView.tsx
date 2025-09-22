@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import type { User, Employee } from '../../types';
-import { getEmployeeById } from '../../services/api';
-import Button from '../common/Button';
-import PlusIcon from '../icons/PlusIcon';
-import LoadingSpinner from '../common/LoadingSpinner';
-import Tabs from '../common/Tabs';
-import EmployeeProfileOverview from './EmployeeProfileOverview';
-import MyDocuments from './MyDocuments';
-import MyPayslips from './MyPayslips';
-import { useAppContext } from '../../AppContext';
+import type { User, Employee } from '../../types.ts';
+import { getEmployeeById } from '../../services/api.ts';
+import Button from '../common/Button.tsx';
+import PlusIcon from '../icons/PlusIcon.tsx';
+import LoadingSpinner from '../common/LoadingSpinner.tsx';
+import Tabs from '../common/Tabs.tsx';
+import EmployeeProfileOverview from './EmployeeProfileOverview.tsx';
+import MyDocuments from './MyDocuments.tsx';
+import MyPayslips from './MyPayslips.tsx';
+import { useAppContext } from '../../AppContext.tsx';
 
 interface EmployeeDashboardViewProps {
   user: User;
@@ -57,8 +57,8 @@ const EmployeeDashboardView: React.FC<EmployeeDashboardViewProps> = ({ user, onR
             <div className="flex items-center space-x-4">
                 <img className="w-24 h-24 rounded-full object-cover shadow-lg" src={employee.avatarUrl} alt="Your avatar" />
                 <div>
-                    <h1 className="text-3xl font-bold text-brand-dark">Welcome, {employee.name}!</h1>
-                    <p className="text-gray-600 text-lg">{employee.position}</p>
+                    <h1 className="text-3xl font-bold text-foreground">Welcome, {employee.name}!</h1>
+                    <p className="text-muted-foreground text-lg">{employee.position}</p>
                 </div>
             </div>
             <Button onClick={onRequestLeave} icon={<PlusIcon />}>Request Leave</Button>

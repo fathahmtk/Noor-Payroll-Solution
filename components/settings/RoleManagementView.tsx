@@ -34,9 +34,9 @@ const RoleManagementView: React.FC = () => {
     }
 
     return (
-        <div className="bg-brand-light p-6 rounded-lg shadow-md">
+        <div className="bg-card p-6 rounded-lg shadow-md border border-border">
             <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-brand-dark">Roles & Permissions</h3>
+                <h3 className="text-lg font-semibold text-foreground">Roles & Permissions</h3>
                 <Button onClick={() => openModal('createRole', { onUpdate: handleUpdate })} icon={<PlusIcon />}>
                     Create Role
                 </Button>
@@ -45,8 +45,8 @@ const RoleManagementView: React.FC = () => {
                 <EmptyState message="No Roles Found" description="Create roles to manage user permissions." />
             ) : (
                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left text-gray-500">
-                        <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+                    <table className="w-full text-sm text-left text-muted-foreground">
+                        <thead className="text-xs text-muted-foreground uppercase bg-secondary">
                             <tr>
                                 <th scope="col" className="px-6 py-3">Role Name</th>
                                 <th scope="col" className="px-6 py-3">Permissions Count</th>
@@ -55,8 +55,8 @@ const RoleManagementView: React.FC = () => {
                         </thead>
                         <tbody>
                             {roles.map((role) => (
-                                <tr key={role.id} className="bg-white border-b hover:bg-gray-50">
-                                    <td className="px-6 py-4 font-semibold text-gray-900">{role.name}</td>
+                                <tr key={role.id} className="border-b border-border hover:bg-muted/50">
+                                    <td className="px-6 py-4 font-semibold text-foreground">{role.name}</td>
                                     <td className="px-6 py-4">{role.permissions.length}</td>
                                     <td className="px-6 py-4 text-center">
                                          <Button variant="secondary" size="sm" icon={<PencilIcon className="w-4 h-4" />} onClick={() => openModal('editRole', { role, onUpdate: handleUpdate })}>

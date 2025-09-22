@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { View, type EmployeeDocument, type LeaveRequest } from '../../types';
 import PendingIcon from '../icons/PendingIcon';
@@ -14,12 +13,11 @@ interface NotificationsPanelProps {
 }
 
 const NotificationItem: React.FC<{ icon: React.ReactNode; text: string; onClick: () => void; }> = ({ icon, text, onClick }) => (
-    <div onClick={onClick} className="flex items-center p-3 hover:bg-slate-100 cursor-pointer rounded-md">
-        <div className="flex-shrink-0 mr-3 text-slate-500">{icon}</div>
-        <p className="text-sm font-medium text-slate-700">{text}</p>
+    <div onClick={onClick} className="flex items-center p-3 hover:bg-secondary cursor-pointer rounded-md">
+        <div className="flex-shrink-0 mr-3 text-muted-foreground">{icon}</div>
+        <p className="text-sm font-medium text-foreground">{text}</p>
     </div>
 );
-
 
 const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ alerts, onClose, onNavigate }) => {
     const handleNavigate = (view: View) => {
@@ -36,16 +34,16 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ alerts, onClose
         })),
         ...alerts.expiringDocs.map(doc => ({
             id: `doc-${doc.id}`,
-            icon: <VisaIcon className="w-5 h-5 text-red-500" />,
+            icon: <VisaIcon className="w-5 h-5 text-destructive" />,
             text: `${doc.documentType} for ${doc.employeeName} expires soon.`,
             onClick: () => handleNavigate(View.Documents)
         })),
     ];
     
   return (
-    <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-slate-200 z-50">
-        <div className="p-4 border-b">
-            <h3 className="font-semibold text-slate-800">Notifications</h3>
+    <div className="absolute right-0 mt-2 w-80 bg-card rounded-xl shadow-lg border border-border z-50">
+        <div className="p-4 border-b border-border">
+            <h3 className="font-semibold text-foreground">Notifications</h3>
         </div>
         <div className="p-2 max-h-80 overflow-y-auto">
             {allAlerts.length > 0 ? (
@@ -56,7 +54,7 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ alerts, onClose
                 </div>
             ) : (
                 <div className="text-center py-8 px-4">
-                    <p className="text-sm text-slate-500">You're all caught up!</p>
+                    <p className="text-sm text-muted-foreground">You're all caught up!</p>
                 </div>
             )}
         </div>

@@ -1,8 +1,8 @@
 import React from 'react';
-import Button from '../common/Button';
-import PlusIcon from '../icons/PlusIcon';
-import { View } from '../../types';
-import { useAppContext } from '../../AppContext';
+import Button from '../common/Button.tsx';
+import PlusIcon from '../icons/PlusIcon.tsx';
+import { View } from '../../types.ts';
+import { useAppContext } from '../../AppContext.tsx';
 
 interface HeaderProps {
     title: string;
@@ -32,23 +32,35 @@ const Header: React.FC<HeaderProps> = ({ title, onBack }) => {
             Post New Job
           </Button>
         );
+      case View.VehicleManagement:
+        return (
+          <Button size="sm" icon={<PlusIcon />} onClick={() => openModal('addVehicle')}>
+            Add Vehicle
+          </Button>
+        );
+      case View.PettyCash:
+        return (
+            <Button size="sm" icon={<PlusIcon />} onClick={() => openModal('addPettyCash')}>
+                New Transaction
+            </Button>
+        );
       default:
         return null;
     }
   };
 
   return (
-    <header className="bg-brand-light border-b border-slate-200 z-30 shadow-sm">
+    <header className="bg-card text-foreground border-b border-border z-30 shadow-sm">
         <div className="px-6 py-3 flex items-center justify-between">
             <div className="flex items-center space-x-3">
                 {onBack && (
-                    <button onClick={onBack} className="text-gray-500 hover:text-gray-800 p-1 rounded-full hover:bg-gray-100">
+                    <button onClick={onBack} className="text-muted-foreground hover:text-foreground p-1 rounded-full hover:bg-secondary">
                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                         </svg>
                     </button>
                 )}
-                 <h1 className="text-xl font-semibold text-brand-dark">{title}</h1>
+                 <h1 className="text-xl font-semibold">{title}</h1>
             </div>
             <div className="flex items-center space-x-2">
                 {getCommandBarActions()}

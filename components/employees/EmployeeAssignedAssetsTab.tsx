@@ -11,7 +11,7 @@ interface EmployeeAssignedAssetsTabProps {
 
 const EmployeeAssignedAssetsTab: React.FC<EmployeeAssignedAssetsTabProps> = ({ employeeId }) => {
   const { currentUser } = useAppContext();
-  const { data: assets, loading } = useDataFetching(() => getAssetsByEmployeeId(currentUser!.tenantId, employeeId));
+  const { data: assets, loading } = useDataFetching(currentUser ? `assignedAssets-${currentUser.tenantId}-${employeeId}` : null, () => getAssetsByEmployeeId(currentUser!.tenantId, employeeId));
 
   if (loading) {
     return <LoadingSpinner />;
@@ -19,11 +19,11 @@ const EmployeeAssignedAssetsTab: React.FC<EmployeeAssignedAssetsTabProps> = ({ e
 
   return (
     <div className="max-w-4xl mx-auto">
-      <h3 className="text-lg font-semibold text-brand-dark mb-4">Assigned Assets</h3>
+      <h3 className="text-lg font-semibold text-foreground mb-4">Assigned Assets</h3>
       {assets && assets.length > 0 ? (
          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-gray-500">
-                <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+            <table className="w-full text-sm text-left text-muted-foreground">
+                <thead className="text-xs text-muted-foreground uppercase bg-secondary">
                     <tr>
                         <th scope="col" className="px-6 py-3">Asset Name</th>
                         <th scope="col" className="px-6 py-3">Asset Tag</th>
@@ -33,8 +33,8 @@ const EmployeeAssignedAssetsTab: React.FC<EmployeeAssignedAssetsTabProps> = ({ e
                 </thead>
                 <tbody>
                     {assets.map(asset => (
-                        <tr key={asset.id} className="bg-white border-b hover:bg-gray-50">
-                            <td className="px-6 py-4 font-semibold text-gray-900">{asset.name}</td>
+                        <tr key={asset.id} className="border-b border-border hover:bg-muted/50">
+                            <td className="px-6 py-4 font-semibold text-foreground">{asset.name}</td>
                             <td className="px-6 py-4 font-mono">{asset.assetTag}</td>
                             <td className="px-6 py-4">{asset.category}</td>
                             <td className="px-6 py-4">{asset.assignmentDate ? new Date(asset.assignmentDate).toLocaleDateString() : 'N/A'}</td>

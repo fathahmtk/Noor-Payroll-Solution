@@ -28,7 +28,6 @@ const downloadCSV = (data: any[], filename: string) => {
     return true;
 };
 
-
 const ReportItem: React.FC<{ title: string; description: string; onDownload: () => Promise<boolean>; }> = ({ title, description, onDownload }) => {
     const [loading, setLoading] = React.useState(false);
     const { addToast } = useToasts();
@@ -45,10 +44,10 @@ const ReportItem: React.FC<{ title: string; description: string; onDownload: () 
     };
 
     return (
-        <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200">
+        <div className="flex items-center justify-between p-4 bg-secondary rounded-lg border border-border">
             <div>
-                <h4 className="font-semibold text-brand-dark">{title}</h4>
-                <p className="text-sm text-gray-500">{description}</p>
+                <h4 className="font-semibold text-foreground">{title}</h4>
+                <p className="text-sm text-muted-foreground">{description}</p>
             </div>
             <Button variant="secondary" icon={<DownloadIcon />} onClick={handleClick} isLoading={loading}>
                 Download
@@ -56,7 +55,6 @@ const ReportItem: React.FC<{ title: string; description: string; onDownload: () 
         </div>
     );
 };
-
 
 const ReportsGenerator: React.FC = () => {
     const { addToast } = useToasts();
@@ -105,8 +103,8 @@ const ReportsGenerator: React.FC = () => {
     ];
 
     return (
-        <div className="bg-brand-light p-6 rounded-lg shadow-md max-w-4xl mx-auto">
-            <h3 className="text-lg font-semibold text-brand-dark mb-4">Generate Reports</h3>
+        <div className="bg-card p-6 rounded-lg shadow-md max-w-4xl mx-auto border border-border">
+            <h3 className="text-lg font-semibold text-foreground mb-4">Generate Reports</h3>
             <div className="space-y-4">
                 {reports.map(report => (
                     <ReportItem key={report.title} {...report} />

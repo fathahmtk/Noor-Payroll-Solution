@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { Candidate, JobOpening } from '../../types';
+import type { Candidate, JobOpening, CandidateStatus } from '../../types';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
 
@@ -12,11 +12,14 @@ interface AddCandidateModalProps {
   onUpdate: () => void;
 }
 
+const formInputClasses = "mt-1 block w-full border border-border bg-secondary rounded-md shadow-sm p-2 text-foreground focus:ring-primary focus:border-primary";
+const formLabelClasses = "block text-sm font-medium text-muted-foreground";
+
 const initialState = {
     name: '',
     email: '',
     phone: '',
-    resumeUrl: 'mock/resume.pdf',
+    resumeUrl: '',
 };
 
 const AddCandidateModal: React.FC<AddCandidateModalProps> = ({ isOpen, onClose, onAddCandidate, isSubmitting, jobOpening, onUpdate }) => {
@@ -36,7 +39,6 @@ const AddCandidateModal: React.FC<AddCandidateModalProps> = ({ isOpen, onClose, 
         jobOpeningId: jobOpening.id,
         status: 'Applied',
     });
-    onUpdate();
   };
   
   const handleClose = () => {
@@ -56,35 +58,22 @@ const AddCandidateModal: React.FC<AddCandidateModalProps> = ({ isOpen, onClose, 
       <form id="add-candidate-form" onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700">Full Name</label>
-                <input type="text" id="name" name="name" value={formData.name} onChange={handleChange} required className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+                <label htmlFor="name" className={formLabelClasses}>Full Name</label>
+                <input type="text" id="name" name="name" value={formData.name} onChange={handleChange} required className={formInputClasses} />
             </div>
             <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email Address</label>
-                <input type="email" id="email" name="email" value={formData.email} onChange={handleChange} required className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+                <label htmlFor="email" className={formLabelClasses}>Email Address</label>
+                <input type="email" id="email" name="email" value={formData.email} onChange={handleChange} required className={formInputClasses} />
             </div>
         </div>
         <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone Number</label>
-            <input type="tel" id="phone" name="phone" value={formData.phone} onChange={handleChange} required className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+            <label htmlFor="phone" className={formLabelClasses}>Phone Number</label>
+            <input type="tel" id="phone" name="phone" value={formData.phone} onChange={handleChange} required className={formInputClasses} />
         </div>
         <div>
-            <label className="block text-sm font-medium text-gray-700">Resume/CV</label>
-            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-                <div className="space-y-1 text-center">
-                    <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
-                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    <div className="flex text-sm text-gray-600">
-                        <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-brand-primary hover:text-blue-700 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-brand-primary">
-                            <span>Upload a file</span>
-                            <input id="file-upload" name="file-upload" type="file" className="sr-only" />
-                        </label>
-                        <p className="pl-1">or drag and drop</p>
-                    </div>
-                    <p className="text-xs text-gray-500">PDF up to 10MB</p>
-                </div>
-            </div>
+            <label htmlFor="resumeUrl" className={formLabelClasses}>Resume URL</label>
+            <input type="text" id="resumeUrl" name="resumeUrl" value={formData.resumeUrl} onChange={handleChange} required placeholder="e.g., https://linkedin.com/in/..." className={formInputClasses} />
+            <p className="mt-1 text-xs text-muted-foreground">In this demo, please provide a link to a resume. File uploads are not supported.</p>
         </div>
       </form>
     </Modal>

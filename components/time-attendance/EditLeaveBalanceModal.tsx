@@ -11,6 +11,9 @@ interface EditLeaveBalanceModalProps {
   isSubmitting: boolean;
 }
 
+const formInputClasses = "mt-1 block w-full border border-border bg-secondary rounded-md shadow-sm p-2 text-foreground focus:ring-primary focus:border-primary";
+const formLabelClasses = "block text-sm font-medium text-muted-foreground";
+
 const EditLeaveBalanceModal: React.FC<EditLeaveBalanceModalProps> = ({ isOpen, onClose, onUpdate, balance, isSubmitting }) => {
   const [formData, setFormData] = useState<LeaveBalance | null>(null);
 
@@ -49,14 +52,14 @@ const EditLeaveBalanceModal: React.FC<EditLeaveBalanceModalProps> = ({ isOpen, o
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={`Edit Leave Balances for ${balance?.employeeName}`} footer={modalFooter}>
       <form id="edit-balance-form" onSubmit={handleSubmit} className="space-y-4">
-        <p className="text-sm text-gray-500">Update the leave balances for the current year. Values are in days.</p>
+        <p className="text-sm text-muted-foreground">Update the leave balances for the current year. Values are in days.</p>
         
         {formData?.balances?.map((balanceDetail, index) => (
-            <div key={balanceDetail.leaveType} className="p-4 border rounded-lg bg-gray-50">
-                <h4 className="font-semibold text-gray-700 mb-3">{balanceDetail.leaveType} Leave</h4>
+            <div key={balanceDetail.leaveType} className="p-4 border border-border rounded-lg bg-secondary">
+                <h4 className="font-semibold text-foreground mb-3">{balanceDetail.leaveType} Leave</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label htmlFor={`totalDays-${index}`} className="block text-sm font-medium text-gray-700">Total Allotted Days</label>
+                        <label htmlFor={`totalDays-${index}`} className={formLabelClasses}>Total Allotted Days</label>
                         <input
                             type="number"
                             id={`totalDays-${index}`}
@@ -64,11 +67,11 @@ const EditLeaveBalanceModal: React.FC<EditLeaveBalanceModalProps> = ({ isOpen, o
                             value={balanceDetail.totalDays}
                             onChange={(e) => handleBalanceChange(index, 'totalDays', e.target.value)}
                             required
-                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                            className={formInputClasses}
                         />
                     </div>
                     <div>
-                        <label htmlFor={`usedDays-${index}`} className="block text-sm font-medium text-gray-700">Days Used</label>
+                        <label htmlFor={`usedDays-${index}`} className={formLabelClasses}>Days Used</label>
                         <input
                             type="number"
                             id={`usedDays-${index}`}
@@ -76,7 +79,7 @@ const EditLeaveBalanceModal: React.FC<EditLeaveBalanceModalProps> = ({ isOpen, o
                             value={balanceDetail.usedDays}
                             onChange={(e) => handleBalanceChange(index, 'usedDays', e.target.value)}
                             required
-                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                            className={formInputClasses}
                         />
                     </div>
                 </div>

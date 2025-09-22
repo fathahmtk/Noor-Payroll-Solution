@@ -1,18 +1,25 @@
 import React, { useState } from 'react';
 import { getDocuments, addDocument as apiAddDocument, deleteDocument as apiDeleteDocument, getEmployees } from '../../services/api';
 import type { EmployeeDocument, Employee } from '../../types';
-import Button from '../common/Button';
-import PlusIcon from '../icons/PlusIcon';
-import DocumentTable from './DocumentTable';
-import AddDocumentModal from './AddDocumentModal';
-import ConfirmDeleteModal from '../common/ConfirmDeleteModal';
-import { useDataFetching } from '../../hooks/useDataFetching';
-import { useAppContext } from '../../AppContext';
+import Button from '../common/Button.tsx';
+import PlusIcon from '../icons/PlusIcon.tsx';
+import DocumentTable from './DocumentTable.tsx';
+import AddDocumentModal from './AddDocumentModal.tsx';
+import ConfirmDeleteModal from '../common/ConfirmDeleteModal.tsx';
+import { useDataFetching } from '../../hooks/useDataFetching.tsx';
+import { useAppContext } from '../../AppContext.tsx';
+import LoadingSpinner from '../common/LoadingSpinner.tsx';
 
 const DocumentView: React.FC = () => {
   const { currentUser } = useAppContext();
-  const { data: documents, loading: loadingDocs, refresh: fetchDocuments } = useDataFetching(() => getDocuments(currentUser!.tenantId));
-  const { data: employees, loading: loadingEmps } = useDataFetching(() => getEmployees(currentUser!.tenantId));
+  const { data: documents, loading: loadingDocs, refresh: fetchDocuments } = useDataFetching(
+    currentUser ? `documents-${currentUser.tenantId}` : null,
+    () => getDocuments(currentUser!.tenantId)
+  );
+  const { data: employees, loading: loadingEmps } = useDataFetching(
+    currentUser ? `employees-${currentUser.tenantId}` : null,
+    () => getEmployees(currentUser!.tenantId)
+  );
   
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -54,16 +61,21 @@ const DocumentView: React.FC = () => {
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-brand-dark">Document Management</h2>
+        <h2 className="text-xl font-semibold text-foreground">Document Management</h2>
         <Button onClick={() => setIsAddModalOpen(true)} icon={<PlusIcon />}>
           Add Document
         </Button>
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center h-64"><p>Loading documents...</p></div>
+        <LoadingSpinner />
       ) : (
-        <DocumentTable documents={documents || []} onDelete={handleOpenDeleteModal} />
+        <DocumentTable 
+            documents={documents || []} 
+            employees={employees || []} 
+            onDelete={handleOpenDeleteModal} 
+            onAdd={() => setIsAddModalOpen(true)}
+        />
       )}
       
       <AddDocumentModal 

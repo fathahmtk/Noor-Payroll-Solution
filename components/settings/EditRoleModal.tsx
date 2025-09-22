@@ -13,6 +13,9 @@ interface EditRoleModalProps {
   isSubmitting: boolean;
 }
 
+const formInputClasses = "mt-1 block w-full border border-border bg-secondary rounded-md shadow-sm p-2 text-foreground focus:ring-primary focus:border-primary";
+const formLabelClasses = "block text-sm font-medium text-muted-foreground";
+
 const EditRoleModal: React.FC<EditRoleModalProps> = ({ isOpen, onClose, onSubmit, role, isSubmitting }) => {
   const isEditMode = !!role?.role;
   const [name, setName] = useState('');
@@ -56,7 +59,6 @@ const EditRoleModal: React.FC<EditRoleModalProps> = ({ isOpen, onClose, onSubmit
     } else {
         onSubmit(roleData);
     }
-    role?.onUpdate();
   };
 
   const permissionGroups = useMemo(() => {
@@ -79,16 +81,17 @@ const EditRoleModal: React.FC<EditRoleModalProps> = ({ isOpen, onClose, onSubmit
     <Modal isOpen={isOpen} onClose={onClose} title={isEditMode ? `Edit Role: ${role?.role?.name}` : "Create New Role"} footer={modalFooter}>
       <form id="edit-role-form" onSubmit={handleSubmit} className="space-y-4">
         <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700">Role Name</label>
-            <input type="text" id="name" name="name" value={name} onChange={(e) => setName(e.target.value)} required className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+            <label htmlFor="name" className={formLabelClasses}>Role Name</label>
+            <input type="text" id="name" name="name" value={name} onChange={(e) => setName(e.target.value)} required className={formInputClasses} />
         </div>
         <div>
-            <label className="block text-sm font-medium text-gray-700">Permissions</label>
+            <label className={formLabelClasses}>Permissions</label>
             {loadingPermissions ? <LoadingSpinner /> : (
-                <div className="mt-2 space-y-4 max-h-64 overflow-y-auto pr-2 border rounded-md p-3">
-                    {Object.entries(permissionGroups).map(([group, permissions]) => (
+                <div className="mt-2 space-y-4 max-h-64 overflow-y-auto pr-2 border border-border rounded-md p-3">
+                    {/* FIX: Explicitly cast the result of Object.entries to fix 'map does not exist on type unknown' error. */}
+                    {(Object.entries(permissionGroups) as [string, Permission[]][]).map(([group, permissions]) => (
                         <div key={group}>
-                            <h4 className="font-semibold text-xs uppercase text-gray-500">{group}</h4>
+                            <h4 className="font-semibold text-xs uppercase text-muted-foreground">{group}</h4>
                             <div className="mt-1 space-y-1">
                                 {permissions.map(p => (
                                     <label key={p.id} className="flex items-center">
@@ -96,9 +99,9 @@ const EditRoleModal: React.FC<EditRoleModalProps> = ({ isOpen, onClose, onSubmit
                                             type="checkbox"
                                             checked={selectedPermissions.includes(p.id)}
                                             onChange={() => handlePermissionToggle(p.id)}
-                                            className="h-4 w-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
+                                            className="h-4 w-4 rounded border-border bg-background text-primary focus:ring-primary"
                                         />
-                                        <span className="ml-2 text-sm text-gray-600">{p.name}</span>
+                                        <span className="ml-2 text-sm text-muted-foreground">{p.name}</span>
                                     </label>
                                 ))}
                             </div>

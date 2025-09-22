@@ -6,20 +6,24 @@ export type EmployeeWithChildren = Employee & { children: EmployeeWithChildren[]
 
 interface OrgChartNodeProps {
   node: EmployeeWithChildren;
+  onViewProfile: (employeeId: string) => void;
 }
 
-const OrgChartNode: React.FC<OrgChartNodeProps> = ({ node }) => {
+const OrgChartNode: React.FC<OrgChartNodeProps> = ({ node, onViewProfile }) => {
   return (
     <li>
-      <div className="inline-block bg-white p-3 rounded-lg shadow-md border border-slate-200 min-w-[180px]">
+      <div 
+        className="inline-block bg-secondary p-3 rounded-lg shadow-md border border-border min-w-[180px] cursor-pointer hover:shadow-lg hover:border-primary transition-all"
+        onClick={() => onViewProfile(node.id)}
+      >
         <img src={node.avatarUrl} alt={node.name} className="w-16 h-16 rounded-full mx-auto mb-2" />
-        <h4 className="font-bold text-brand-dark">{node.name}</h4>
-        <p className="text-xs text-slate-500">{node.position}</p>
+        <h4 className="font-bold text-foreground">{node.name}</h4>
+        <p className="text-xs text-muted-foreground">{node.position}</p>
       </div>
       {node.children && node.children.length > 0 && (
         <ul className="flex justify-center">
           {node.children.map(child => (
-            <OrgChartNode key={child.id} node={child} />
+            <OrgChartNode key={child.id} node={child} onViewProfile={onViewProfile} />
           ))}
         </ul>
       )}

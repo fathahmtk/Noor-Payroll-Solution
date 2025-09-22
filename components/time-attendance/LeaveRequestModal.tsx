@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { LeaveRequest, LeaveType } from '../../types';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
@@ -12,6 +12,10 @@ interface LeaveRequestModalProps {
   isSubmitting: boolean;
 }
 
+const formInputClasses = "mt-1 block w-full border border-border bg-secondary rounded-md shadow-sm p-2 text-foreground focus:ring-primary focus:border-primary";
+const formLabelClasses = "block text-sm font-medium text-muted-foreground";
+const formSelectClasses = `${formInputClasses} bg-secondary`;
+
 const leaveTypes: LeaveType[] = ['Annual', 'Sick', 'Unpaid', 'Maternity'];
 
 const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, onSubmit, employeeId, isSubmitting }) => {
@@ -21,7 +25,18 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
     endDate: new Date().toISOString().split('T')[0],
     reason: '',
   });
+  const [dateError, setDateError] = useState<string | null>(null);
   const { addToast } = useToasts();
+  
+  useEffect(() => {
+    if (formData.startDate && formData.endDate) {
+        if (new Date(formData.endDate) < new Date(formData.startDate)) {
+            setDateError("End date cannot be before the start date.");
+        } else {
+            setDateError(null);
+        }
+    }
+  }, [formData.startDate, formData.endDate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -30,12 +45,12 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.startDate || !formData.endDate) {
-        addToast("Please select a start and end date.", "error");
+    if (dateError) {
+        addToast(dateError, "error");
         return;
     }
-     if (new Date(formData.endDate) < new Date(formData.startDate)) {
-        addToast("End date cannot be before the start date.", "error");
+    if (!formData.startDate || !formData.endDate) {
+        addToast("Please select a start and end date.", "error");
         return;
     }
     onSubmit({
@@ -51,13 +66,14 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
       endDate: new Date().toISOString().split('T')[0],
       reason: '',
     });
+    setDateError(null);
     onClose();
   }
 
   const modalFooter = (
     <>
       <Button variant="secondary" onClick={handleClose} disabled={isSubmitting}>Cancel</Button>
-      <Button type="submit" form="leave-request-form" isLoading={isSubmitting}>Submit Request</Button>
+      <Button type="submit" form="leave-request-form" isLoading={isSubmitting} disabled={!!dateError}>Submit Request</Button>
     </>
   );
 
@@ -65,8 +81,8 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
     <Modal isOpen={isOpen} onClose={handleClose} title="Submit Leave Request" footer={modalFooter}>
       <form id="leave-request-form" onSubmit={handleSubmit} className="space-y-4">
         <div>
-            <label htmlFor="leaveType" className="block text-sm font-medium text-gray-700">Leave Type</label>
-            <select id="leaveType" name="leaveType" value={formData.leaveType} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 bg-white">
+            <label htmlFor="leaveType" className={formLabelClasses}>Leave Type</label>
+            <select id="leaveType" name="leaveType" value={formData.leaveType} onChange={handleChange} className={formSelectClasses}>
                 {leaveTypes.map(type => (
                     <option key={type} value={type}>{type}</option>
                 ))}
@@ -74,17 +90,18 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
              <div>
-                <label htmlFor="startDate" className="block text-sm font-medium text-gray-700">Start Date</label>
-                <input type="date" id="startDate" name="startDate" value={formData.startDate} onChange={handleChange} required className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+                <label htmlFor="startDate" className={formLabelClasses}>Start Date</label>
+                <input type="date" id="startDate" name="startDate" value={formData.startDate} onChange={handleChange} required className={formInputClasses} aria-invalid={!!dateError} />
             </div>
             <div>
-                <label htmlFor="endDate" className="block text-sm font-medium text-gray-700">End Date</label>
-                <input type="date" id="endDate" name="endDate" value={formData.endDate} onChange={handleChange} required className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+                <label htmlFor="endDate" className={formLabelClasses}>End Date</label>
+                <input type="date" id="endDate" name="endDate" value={formData.endDate} onChange={handleChange} required className={formInputClasses} aria-invalid={!!dateError} />
             </div>
         </div>
+        {dateError && <p className="text-sm text-destructive -mt-2">{dateError}</p>}
         <div>
-            <label htmlFor="reason" className="block text-sm font-medium text-gray-700">Reason (Optional)</label>
-            <textarea id="reason" name="reason" value={formData.reason} onChange={handleChange} rows={3} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"></textarea>
+            <label htmlFor="reason" className={formLabelClasses}>Reason (Optional)</label>
+            <textarea id="reason" name="reason" value={formData.reason} onChange={handleChange} rows={3} className={formInputClasses}></textarea>
         </div>
       </form>
     </Modal>

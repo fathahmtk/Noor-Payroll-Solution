@@ -3,33 +3,22 @@ import type {
     LeaveRequest, EmployeeDocument, CompanyAsset, LeaveBalance, 
     AssetMaintenance, Payslip, InviteUser, LeaveBalanceDetail as LBDType, 
     OnboardingTask, OffboardingTask, ContractDetails, Tenant, Role, Permission,
-    JobOpening, Candidate, CandidateStatus
-} from '../types';
-import { generateSIFContent } from '../utils/wpsUtils';
-import { getDaysBetween } from '../utils/dateUtils';
+    JobOpening, Candidate, CandidateStatus, CompanyVehicle, VehicleLog, PettyCashTransaction,
+    AuditLog, ContactRequest, SupportTicket, KnowledgeBaseArticle
+} from '../types.ts';
+import { SubscriptionTier, EmployeeStatus, SponsorshipType, VisaType } from '../types.ts';
+import { generateSIFContent } from '../utils/wpsUtils.ts';
+import { getDaysBetween } from '../utils/dateUtils.ts';
 
 // Export type for external usage
 export type LeaveBalanceDetail = LBDType;
 
-// --- MULTI-TENANT MOCK DATABASE ---
-let tenants = new Map<string, Tenant>();
-let users = new Map<string, User[]>();
-let employees = new Map<string, Employee[]>();
-let payrollRuns = new Map<string, PayrollRun[]>();
-let companySettings = new Map<string, CompanySettings>();
-let attendanceRecords = new Map<string, AttendanceRecord[]>();
-let leaveRequests = new Map<string, LeaveRequest[]>();
-let leaveBalances = new Map<string, LeaveBalance[]>();
-let documents = new Map<string, EmployeeDocument[]>();
-let companyAssets = new Map<string, CompanyAsset[]>();
-let assetMaintenances = new Map<string, AssetMaintenance[]>();
-let payslips = new Map<string, Payslip[]>();
-let roles = new Map<string, Role[]>();
-let jobOpenings = new Map<string, JobOpening[]>();
-let candidates = new Map<string, Candidate[]>();
+
+// --- PERSISTENCE LOGIC ---
+const DB_KEY = 'noor-hr-database-v1';
 
 // Global data (not tenant-specific)
-let permissions: Permission[] = [
+export let permissions: Permission[] = [
     { id: 'dashboard:view', name: 'View Dashboard', group: 'Dashboard' },
     { id: 'employees:read', name: 'View Employees', group: 'Employees' },
     { id: 'employees:create', name: 'Create Employees', group: 'Employees' },
@@ -38,180 +27,90 @@ let permissions: Permission[] = [
     { id: 'payroll:run', name: 'Run Payroll', group: 'Payroll' },
     { id: 'payroll:read', name: 'View Payroll History', group: 'Payroll' },
     { id: 'recruitment:manage', name: 'Manage Recruitment', group: 'Recruitment' },
+    { id: 'operations:manage', name: 'Manage Operations (Assets, Vehicles, etc.)', group: 'Operations'},
     { id: 'settings:manage', name: 'Manage Company Settings', group: 'Settings' },
     { id: 'roles:manage', name: 'Manage Roles & Permissions', group: 'Settings' },
     { id: 'users:manage', name: 'Manage Users', group: 'Settings' },
     { id: 'reports:view', name: 'View Analytics & Reports', group: 'Reports' },
+    { id: 'knowledgebase:manage', name: 'Manage Knowledge Base', group: 'Administration' },
 ];
-const verificationCodes = new Map<string, { code: string; expires: number }>();
+export let verificationCodes = new Map<string, { code: string; expires: number }>();
 
-const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
-
-const generateMockDataForTenant = (tenantId: string, owner: User, hrRole: Role, employeeRole: Role) => {
-    const mockEmployees: Employee[] = [
-        { id: 'emp-1', name: 'Fatima Al-Marri', qid: '29012345678', position: 'Senior Frontend Engineer', department: 'Engineering', basicSalary: 18000, allowances: 4000, deductions: 500, bankName: 'QIB', iban: 'QA50QISB000000000000123456789', joinDate: '2022-03-15', avatarUrl: `https://i.pravatar.cc/150?u=emp-1`, tenantId, managerId: 'emp-3' },
-        { id: 'emp-2', name: 'Hassan Al-Haydos', qid: '29109876543', position: 'HR Specialist', department: 'HR', basicSalary: 14000, allowances: 3000, deductions: 300, bankName: 'QNB', iban: 'QA58QNBA000000000000987654321', joinDate: '2023-01-20', avatarUrl: `https://i.pravatar.cc/150?u=emp-2`, tenantId, managerId: owner.id },
-        { id: 'emp-3', name: 'Aisha Al-Kuwari', qid: '28801112233', position: 'Engineering Manager', department: 'Engineering', basicSalary: 25000, allowances: 6000, deductions: 1000, bankName: 'Dukhan Bank', iban: 'QA21DUKH000000000000111222333', joinDate: '2021-08-01', avatarUrl: `https://i.pravatar.cc/150?u=emp-3`, tenantId, managerId: owner.id },
-        { id: 'emp-4', name: 'Yousef Al-Malki', qid: '29204455667', position: 'Marketing Lead', department: 'Marketing', basicSalary: 16000, allowances: 3500, deductions: 400, bankName: 'Commercial Bank', iban: 'QA85CBQA000000000000445566778', joinDate: '2022-11-05', avatarUrl: `https://i.pravatar.cc/150?u=emp-4`, tenantId, managerId: owner.id },
-        { id: 'emp-5', name: 'Noora Al-Thani', qid: '29307788990', position: 'Junior Accountant', department: 'Finance', basicSalary: 10000, allowances: 2000, deductions: 200, bankName: 'QIB', iban: 'QA60QISB000000000000778899001', joinDate: '2023-06-10', avatarUrl: `https://i.pravatar.cc/150?u=emp-5`, tenantId, managerId: owner.id },
-    ];
-
-    mockEmployees.forEach((emp, index) => {
-        emp.contract = {
-            startDate: emp.joinDate,
-            endDate: new Date(new Date(emp.joinDate).setFullYear(new Date(emp.joinDate).getFullYear() + 2)).toISOString().split('T')[0],
-            jobTitle: emp.position,
-            salary: emp.basicSalary + emp.allowances,
-            benefits: ['Health Insurance', 'Annual Air Ticket'],
-        };
-        emp.onboardingTasks = [
-            { id: `ontask-${emp.id}-1`, description: 'Sign Employment Contract', completed: true, dueDate: new Date(new Date(emp.joinDate).setDate(new Date(emp.joinDate).getDate() + 1)).toISOString().split('T')[0] },
-            { id: `ontask-${emp.id}-2`, description: 'IT Equipment Setup', completed: index % 2 === 0, dueDate: new Date(new Date(emp.joinDate).setDate(new Date(emp.joinDate).getDate() + 2)).toISOString().split('T')[0] },
-            { id: `ontask-${emp.id}-3`, description: 'Bank Account Setup', completed: true, dueDate: new Date(new Date(emp.joinDate).setDate(new Date(emp.joinDate).getDate() + 5)).toISOString().split('T')[0] },
-        ];
-        emp.offboardingTasks = [
-             { id: `offtask-${emp.id}-1`, description: 'Return Company Assets', completed: false, responsible: 'Employee' },
-             { id: `offtask-${emp.id}-2`, description: 'Knowledge Transfer Session', completed: false, responsible: 'Manager' },
-             { id: `offtask-${emp.id}-3`, description: 'Conduct Exit Interview', completed: false, responsible: 'HR' },
-        ]
-    });
-
-    employees.set(tenantId, mockEmployees);
-
-    // Link owner and create HR user
-    const hrUser: User = { id: `user-hr`, username: 'hr@noor.app', name: 'Abdullah Al-Sada', role: hrRole, tenantId, companyName: owner.companyName, employeeId: 'emp-2', avatarUrl: `https://i.pravatar.cc/150?u=hr@noor.app` };
-    users.set(tenantId, [owner, hrUser]);
-
-
-    const today = new Date();
-    const mockDocs: EmployeeDocument[] = [
-        { id: 'doc-1', employeeId: 'emp-1', employeeName: 'Fatima Al-Marri', documentType: 'QID', issueDate: '2022-04-01', expiryDate: new Date(today.setDate(today.getDate() + 25)).toISOString().split('T')[0], s3_key: 'key1', version: 2, tenantId },
-        { id: 'doc-2', employeeId: 'emp-2', employeeName: 'Hassan Al-Haydos', documentType: 'Passport', issueDate: '2021-10-10', expiryDate: '2026-10-09', s3_key: 'key2', version: 1, tenantId },
-        { id: 'doc-3', employeeId: 'emp-4', employeeName: 'Yousef Al-Malki', documentType: 'Visa', issueDate: '2022-11-01', expiryDate: new Date(today.setDate(today.getDate() - 5)).toISOString().split('T')[0], s3_key: 'key3', version: 1, tenantId },
-    ];
-    documents.set(tenantId, mockDocs);
-    
-    const mockLeaveRequests: LeaveRequest[] = [
-        { id: 'leave-1', employeeId: 'emp-1', employeeName: 'Fatima Al-Marri', startDate: '2024-08-01', endDate: '2024-08-10', leaveType: 'Annual', reason: 'Vacation', status: 'Approved', tenantId },
-        { id: 'leave-2', employeeId: 'emp-5', employeeName: 'Noora Al-Thani', startDate: new Date(today.setDate(today.getDate() + 40)).toISOString().split('T')[0], endDate: new Date(today.setDate(today.getDate() + 42)).toISOString().split('T')[0], leaveType: 'Annual', reason: 'Personal', status: 'Pending', tenantId },
-        { id: 'leave-3', employeeId: 'emp-4', employeeName: 'Yousef Al-Malki', startDate: '2024-06-10', endDate: '2024-06-11', leaveType: 'Sick', reason: 'Flu', status: 'Approved', tenantId },
-    ];
-    leaveRequests.set(tenantId, mockLeaveRequests);
-
-    const mockBalances: LeaveBalance[] = mockEmployees.map(emp => ({
-        id: `bal-${emp.id}`, employeeId: emp.id, employeeName: emp.name, tenantId,
-        balances: [
-            { leaveType: 'Annual', totalDays: 21, usedDays: emp.id === 'emp-1' ? 10 : (emp.id === 'emp-4' ? 5 : 0) },
-            { leaveType: 'Sick', totalDays: 14, usedDays: emp.id === 'emp-4' ? 2 : 0 },
-            { leaveType: 'Unpaid', totalDays: 0, usedDays: 0 },
-            { leaveType: 'Maternity', totalDays: 50, usedDays: 0 },
-        ]
-    }));
-    leaveBalances.set(tenantId, mockBalances);
-    
-    const mockAssets: CompanyAsset[] = [
-        { id: 'asset-1', assetTag: 'QT-LAP-001', name: 'MacBook Pro 16"', category: 'IT Equipment', serialNumber: 'C02F1234ABCD', purchaseDate: '2023-01-15', purchaseCost: 9500, residualValue: 1000, depreciationMethod: 'Straight-line', usefulLifeMonths: 36, vendor: 'iSpot', warrantyEndDate: '2026-01-14', location: 'Doha Office', status: 'Assigned', assignedToEmployeeId: 'emp-1', assignmentDate: '2023-01-20', tenantId },
-        { id: 'asset-2', assetTag: 'QT-PHN-001', name: 'iPhone 15 Pro', category: 'IT Equipment', serialNumber: 'A12B3456CDEF', purchaseDate: '2023-09-22', purchaseCost: 4500, residualValue: 500, depreciationMethod: 'Straight-line', usefulLifeMonths: 24, vendor: 'Ooredoo', warrantyEndDate: '2025-09-21', location: 'Doha Office', status: 'Assigned', assignedToEmployeeId: 'emp-3', assignmentDate: '2023-09-25', tenantId },
-        { id: 'asset-3', assetTag: 'QT-VEH-001', name: 'Toyota Land Cruiser', category: 'Vehicle', serialNumber: 'JT1234567890', purchaseDate: '2022-05-10', purchaseCost: 220000, residualValue: 80000, depreciationMethod: 'Straight-line', usefulLifeMonths: 60, vendor: 'Toyota Qatar', warrantyEndDate: '2027-05-09', location: 'Company Parking', status: 'Available', tenantId },
-    ];
-    companyAssets.set(tenantId, mockAssets);
-
-    const mockMaintenance: AssetMaintenance[] = [
-        { id: 'maint-1', assetId: 'asset-3', assetName: 'Toyota Land Cruiser', maintenanceType: 'Check-up', description: 'Annual 40,000km service.', cost: 850, date: '2024-05-15', status: 'Completed', tenantId }
-    ];
-    assetMaintenances.set(tenantId, mockMaintenance);
-
-    const tenantSettings = companySettings.get(tenantId)!;
-    const months = ['June', 'May', 'April', 'March'];
-    const currentYear = new Date().getFullYear();
-    const mockPayrollRuns: PayrollRun[] = months.map((month, i) => {
-        const totalAmount = mockEmployees.reduce((sum, emp) => sum + emp.basicSalary + emp.allowances - emp.deductions, 0);
-        const runDate = new Date();
-        runDate.setMonth(runDate.getMonth() - (i+1));
-        return {
-            id: `pr-${i+1}`, tenantId, month, year: currentYear,
-            runDate: runDate.toISOString(),
-            totalAmount: totalAmount + (Math.random() * 1000 - 500), // slight variation
-            employeeCount: mockEmployees.length, status: 'Completed',
-            wpsFileContent: generateSIFContent(tenantSettings, mockEmployees, month, currentYear)
-        }
-    });
-    payrollRuns.set(tenantId, mockPayrollRuns);
-
-    const mockPayslips: Payslip[] = [];
-    mockPayrollRuns.forEach(run => {
-        mockEmployees.forEach(emp => {
-            mockPayslips.push({
-                id: `ps-${run.id}-${emp.id}`, employeeId: emp.id, period: `${run.month} ${run.year}`,
-                grossSalary: emp.basicSalary + emp.allowances,
-                netSalary: emp.basicSalary + emp.allowances - emp.deductions,
-                downloadUrl: '#', createdAt: run.runDate, tenantId,
-            });
-        });
-    });
-    payslips.set(tenantId, mockPayslips);
-    
-    const mockJob: JobOpening = { id: 'job-1', title: 'Senior Backend Engineer', department: 'Engineering', location: 'Doha, Qatar', status: 'Open', description: 'Looking for a skilled backend developer...', datePosted: '2024-05-20T10:00:00Z', tenantId };
-    jobOpenings.set(tenantId, [mockJob]);
-    
-    const mockCandidates: Candidate[] = [
-        { id: 'cand-1', name: 'Khalid Al-Abdullah', email: 'khalid@test.com', phone: '33445566', jobOpeningId: 'job-1', jobTitle: 'Senior Backend Engineer', status: 'Interview', appliedDate: '2024-05-22T14:00:00Z', resumeUrl: '#', avatarUrl: `https://i.pravatar.cc/150?u=cand-1`, tenantId },
-        { id: 'cand-2', name: 'Sara Mahmoud', email: 'sara@test.com', phone: '55667788', jobOpeningId: 'job-1', jobTitle: 'Senior Backend Engineer', status: 'Applied', appliedDate: '2024-06-01T09:00:00Z', resumeUrl: '#', avatarUrl: `https://i.pravatar.cc/150?u=cand-2`, tenantId },
-    ];
-    candidates.set(tenantId, mockCandidates);
-
-    // Generate mock attendance records for the last month
-    const mockAttendance: AttendanceRecord[] = [];
-    const todayForAttendance = new Date();
-    const lastMonth = new Date(todayForAttendance);
-    lastMonth.setMonth(lastMonth.getMonth() - 1);
-
-    const employeesForAttendance = mockEmployees.filter(e => e.id === 'emp-1' || e.id === 'emp-3' || e.id === 'emp-4');
-
-    for (let d = new Date(lastMonth); d <= todayForAttendance; d.setDate(d.getDate() + 1)) {
-        // Skip weekends (Friday and Saturday in Qatar)
-        if (d.getDay() === 5 || d.getDay() === 6) {
-            continue;
-        }
-
-        employeesForAttendance.forEach(emp => {
-            // Randomly skip some days to make it realistic
-            if (Math.random() > 0.9) return;
-
-            const checkInHour = 8 + Math.floor(Math.random() * 2) - 1; // 7, 8, or 9
-            const checkInMinute = Math.floor(Math.random() * 30);
-            const checkOutHour = 17 + Math.floor(Math.random() * 2) - 1; // 16, 17, or 18
-            const checkOutMinute = Math.floor(Math.random() * 59);
-
-            const checkIn = `${String(checkInHour).padStart(2, '0')}:${String(checkInMinute).padStart(2, '0')}`;
-            const checkOut = `${String(checkOutHour).padStart(2, '0')}:${String(checkOutMinute).padStart(2, '0')}`;
-            
-            const dateStr = new Date(d).toISOString().split('T')[0];
-            
-            const checkInDate = new Date(`${dateStr}T${checkIn}`);
-            const checkOutDate = new Date(`${dateStr}T${checkOut}`);
-            const hoursWorked = (checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60);
-
-            mockAttendance.push({
-                id: `att-${emp.id}-${dateStr}`,
-                employeeId: emp.id,
-                employeeName: emp.name,
-                date: dateStr,
-                checkIn: checkIn,
-                checkOut: checkOut,
-                hoursWorked: Math.max(0, hoursWorked), // Ensure no negative hours
-                tenantId,
-            });
-        });
+// Helper for JSON serialization/deserialization of Map objects
+const replacer = (key: any, value: any) => {
+    if (value instanceof Map) {
+        return { __type: 'Map', data: Array.from(value.entries()) };
     }
-    attendanceRecords.set(tenantId, mockAttendance);
+    return value;
 };
 
-// --- DATA INITIALIZATION ---
+const reviver = (key: any, value: any) => {
+    if (typeof value === 'object' && value !== null && value.__type === 'Map') {
+        return new Map(value.data);
+    }
+    return value;
+};
+
+// --- MULTI-TENANT MOCK DATABASE ---
+export let tenants = new Map<string, Tenant>();
+export let users = new Map<string, User[]>();
+export let employees = new Map<string, Employee[]>();
+export let payrollRuns = new Map<string, PayrollRun[]>();
+export let companySettings = new Map<string, CompanySettings>();
+export let attendanceRecords = new Map<string, AttendanceRecord[]>();
+export let leaveRequests = new Map<string, LeaveRequest[]>();
+export let leaveBalances = new Map<string, LeaveBalance[]>();
+export let documents = new Map<string, EmployeeDocument[]>();
+export let companyAssets = new Map<string, CompanyAsset[]>();
+export let assetMaintenances = new Map<string, AssetMaintenance[]>();
+export let payslips = new Map<string, Payslip[]>();
+export let roles = new Map<string, Role[]>();
+export let jobOpenings = new Map<string, JobOpening[]>();
+export let candidates = new Map<string, Candidate[]>();
+export let companyVehicles = new Map<string, CompanyVehicle[]>();
+export let vehicleLogs = new Map<string, VehicleLog[]>();
+export let pettyCashTransactions = new Map<string, PettyCashTransaction[]>();
+export let auditLogs = new Map<string, AuditLog[]>();
+export let contactRequests = new Map<string, ContactRequest[]>();
+export let supportTickets = new Map<string, SupportTicket[]>();
+export let knowledgeBaseArticles = new Map<string, KnowledgeBaseArticle[]>();
+
+const allMaps = {
+    tenants, users, employees, payrollRuns, companySettings, attendanceRecords,
+    leaveRequests, leaveBalances, documents, companyAssets, assetMaintenances,
+    payslips, roles, jobOpenings, candidates, companyVehicles, vehicleLogs,
+    pettyCashTransactions, auditLogs, verificationCodes, contactRequests, supportTickets,
+    knowledgeBaseArticles
+};
+
+const saveStateToStorage = () => {
+    try {
+        const serializedState = JSON.stringify(allMaps, replacer);
+        localStorage.setItem(DB_KEY, serializedState);
+    } catch (error) {
+        console.error("Error saving state to localStorage", error);
+    }
+};
+
+const addAuditLog = async (tenantId: string, user: { id: string; name: string }, action: string, details: string) => {
+  const logEntry: AuditLog = {
+    id: `log-${Date.now()}-${Math.random()}`,
+    timestamp: new Date().toISOString(),
+    userId: user.id,
+    userName: user.name,
+    action,
+    details,
+    tenantId,
+  };
+  const currentLogs = auditLogs.get(tenantId) || [];
+  auditLogs.set(tenantId, [logEntry, ...currentLogs]);
+};
+
+
 const initTenantData = (tenantId: string, companyName: string, owner: User) => {
     // Default roles for the new tenant
     const ownerRole: Role = { id: `role-${tenantId}-owner`, name: 'Owner', permissions: permissions.map(p => p.id) };
-    const hrRole: Role = { id: `role-${tenantId}-hr`, name: 'HR Manager', permissions: ['dashboard:view', 'employees:read', 'employees:create', 'employees:update', 'recruitment:manage', 'reports:view', 'settings:manage'] };
+    const hrRole: Role = { id: `role-${tenantId}-hr`, name: 'HR Manager', permissions: ['dashboard:view', 'employees:read', 'employees:create', 'employees:update', 'recruitment:manage', 'operations:manage', 'reports:view', 'settings:manage', 'knowledgebase:manage'] };
     const employeeRole: Role = { id: `role-${tenantId}-employee`, name: 'Employee', permissions: [] };
     roles.set(tenantId, [ownerRole, hrRole, employeeRole]);
 
@@ -220,15 +119,119 @@ const initTenantData = (tenantId: string, companyName: string, owner: User) => {
     companySettings.set(tenantId, {
         tenantId,
         companyName,
-        establishmentId: `EST-${String(Date.now()).slice(-5)}`,
-        bankName: 'Qatar National Bank',
-        corporateAccountNumber: `QA58QNBA000000000000${String(Date.now()).slice(-10)}`,
+        establishmentId: '',
+        bankName: '',
+        corporateAccountNumber: '',
     });
     
-    // Generate Rich Mock Data
-    generateMockDataForTenant(tenantId, owner, hrRole, employeeRole);
+    // Initialize empty arrays for all data types for the new tenant
+    employees.set(tenantId, []);
+    documents.set(tenantId, []);
+    leaveRequests.set(tenantId, []);
+    leaveBalances.set(tenantId, []);
+    companyAssets.set(tenantId, []);
+    assetMaintenances.set(tenantId, []);
+    payrollRuns.set(tenantId, []);
+    payslips.set(tenantId, []);
+    jobOpenings.set(tenantId, []);
+    candidates.set(tenantId, []);
+    companyVehicles.set(tenantId, []);
+    vehicleLogs.set(tenantId, []);
+    pettyCashTransactions.set(tenantId, []);
+    attendanceRecords.set(tenantId, []);
+    auditLogs.set(tenantId, []);
+    supportTickets.set(tenantId, []);
+    knowledgeBaseArticles.set(tenantId, []);
 };
 
+const loadStateFromStorage = async () => {
+    try {
+        const storedState = localStorage.getItem(DB_KEY);
+        if (storedState) {
+            const parsedState = JSON.parse(storedState, reviver);
+            // Repopulate maps to keep exported references valid
+            for (const key in allMaps) {
+                if (Object.prototype.hasOwnProperty.call(allMaps, key)) {
+                    const map = allMaps[key as keyof typeof allMaps];
+                    const parsedData = parsedState[key];
+                    map.clear();
+                    if (parsedData instanceof Map) {
+                        parsedData.forEach((v: any, k: any) => map.set(k, v));
+                    }
+                }
+            }
+        }
+
+        // Ensure a demo user for Google login always exists
+        const googleDemoUserEmail = 'demouser@google.com';
+        const googleUserExists = Array.from(users.values()).flat().some(u => u.username === googleDemoUserEmail);
+        
+        if (!googleUserExists) {
+            console.log("Creating Google demo user...");
+            
+            const tenantId = 'tenant-google-demo';
+            const companyName = 'Demo Company';
+            
+            const newTenant: Tenant = { id: tenantId, name: companyName, subscriptionTier: SubscriptionTier.Enterprise };
+            tenants.set(tenantId, newTenant);
+
+            const ownerRole: Role = { id: `role-${tenantId}-owner`, name: 'Owner', permissions: permissions.map(p => p.id) };
+            
+            const ownerUser: User = {
+                id: `user-google-demo`,
+                username: googleDemoUserEmail,
+                name: 'Demo User',
+                role: ownerRole,
+                tenantId: tenantId,
+                companyName: companyName,
+                avatarUrl: `https://i.pravatar.cc/100?u=${googleDemoUserEmail}`
+            };
+            
+            initTenantData(tenantId, companyName, ownerUser);
+            saveStateToStorage();
+        }
+
+        // Ensure a demo user for Microsoft login always exists
+        const microsoftDemoUserEmail = 'demouser@microsoft.com';
+        const microsoftUserExists = Array.from(users.values()).flat().some(u => u.username === microsoftDemoUserEmail);
+
+        if (!microsoftUserExists) {
+            console.log("Creating Microsoft demo user...");
+            
+            const tenantId = 'tenant-microsoft-demo';
+            const companyName = 'MSFT Solutions';
+            
+            const newTenant: Tenant = { id: tenantId, name: companyName, subscriptionTier: SubscriptionTier.Premium };
+            tenants.set(tenantId, newTenant);
+
+            const ownerRole: Role = { id: `role-${tenantId}-owner`, name: 'Owner', permissions: permissions.map(p => p.id) };
+            
+            const ownerUser: User = {
+                id: `user-microsoft-demo`,
+                username: microsoftDemoUserEmail,
+                name: 'MSFT Demo User',
+                role: ownerRole,
+                tenantId: tenantId,
+                companyName: companyName,
+                avatarUrl: `https://i.pravatar.cc/100?u=${microsoftDemoUserEmail}`
+            };
+            
+            initTenantData(tenantId, companyName, ownerUser);
+            saveStateToStorage();
+        }
+
+    } catch (error) {
+        console.error("Error loading state from localStorage", error);
+        // Avoid wiping storage on arbitrary errors, which could be transient.
+        // localStorage.removeItem(DB_KEY);
+    }
+};
+
+// Load the database from storage when the module is first imported
+loadStateFromStorage();
+
+
+export const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
 // --- AUTH & REGISTRATION API ---
 export const registerCompanyAndUser = async (companyName: string, userName: string, userEmail: string): Promise<{ success: boolean; message: string }> => {
@@ -239,7 +242,7 @@ export const registerCompanyAndUser = async (companyName: string, userName: stri
     }
 
     const tenantId = `tenant-${String(Date.now()).slice(-6)}`;
-    const newTenant: Tenant = { id: tenantId, name: companyName };
+    const newTenant: Tenant = { id: tenantId, name: companyName, subscriptionTier: SubscriptionTier.Free };
     tenants.set(tenantId, newTenant);
     
     const ownerRole: Role = { id: `role-${tenantId}-owner`, name: 'Owner', permissions: permissions.map(p => p.id) };
@@ -255,11 +258,14 @@ export const registerCompanyAndUser = async (companyName: string, userName: stri
     };
     
     initTenantData(tenantId, companyName, ownerUser);
+    
+    await addAuditLog(tenantId, ownerUser, 'Registered Company', `New company '${companyName}' was registered.`);
 
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     verificationCodes.set(userEmail.toLowerCase(), { code, expires: Date.now() + 300000 }); // 5 min expiry
     
     console.log(`Verification code for ${userEmail}: ${code}`);
+    saveStateToStorage();
     return { success: true, message: `Verification code sent to ${userEmail}. It is: ${code}` };
 };
 
@@ -274,6 +280,7 @@ export const requestLoginCode = async (email: string): Promise<{ success: boolea
     verificationCodes.set(email.toLowerCase(), { code, expires: Date.now() + 300000 }); // 5 min expiry
 
     console.log(`Verification code for ${email}: ${code}`);
+    saveStateToStorage();
     return { success: true, message: `Verification code sent to ${email}. It is: ${code}` };
 };
 
@@ -286,11 +293,72 @@ export const verifyLoginCode = async (email: string, code: string): Promise<User
     
     verificationCodes.delete(email.toLowerCase());
     const user = Array.from(users.values()).flat().find(u => u.username.toLowerCase() === email.toLowerCase());
+    if (user) {
+        await addAuditLog(user.tenantId, user, 'User Login', 'User logged in successfully.');
+        saveStateToStorage();
+    }
     return user || null;
+};
+
+export const loginWithGoogle = async (): Promise<User | null> => {
+    await delay(700); // Simulate network request
+    const googleDemoUserEmail = 'demouser@google.com';
+    const user = Array.from(users.values()).flat().find(u => u.username === googleDemoUserEmail);
+    if (user) {
+        await addAuditLog(user.tenantId, user, 'User Login', 'User logged in successfully via Google.');
+        saveStateToStorage();
+    }
+    return user || null;
+}
+
+export const loginWithMicrosoft = async (): Promise<User | null> => {
+    await delay(700); // Simulate network request
+    const microsoftDemoUserEmail = 'demouser@microsoft.com';
+    const user = Array.from(users.values()).flat().find(u => u.username === microsoftDemoUserEmail);
+    if (user) {
+        await addAuditLog(user.tenantId, user, 'User Login', 'User logged in successfully via Microsoft.');
+        saveStateToStorage();
+    }
+    return user || null;
+}
+
+// --- PUBLIC/LANDING PAGE API ---
+export const submitContactRequest = async (data: Omit<ContactRequest, 'id' | 'createdAt' | 'company' | 'phone' | 'message'> & { company?: string, phone?: string, message?: string }): Promise<ContactRequest> => {
+    await delay(700);
+    const publicTenantId = 'public-contact-requests';
+    const newRequest: ContactRequest = {
+        id: `contact-${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        company: data.company || '',
+        name: data.name,
+        email: data.email,
+        phone: data.phone || '',
+        message: data.message || '',
+    };
+    const currentRequests = contactRequests.get(publicTenantId) || [];
+    contactRequests.set(publicTenantId, [...currentRequests, newRequest]);
+    saveStateToStorage();
+    return newRequest;
 };
 
 
 // --- TENANT-AWARE API FUNCTIONS ---
+
+// Tenant
+export const getTenant = async (tenantId: string): Promise<Tenant | null> => {
+    await delay(100);
+    return tenants.get(tenantId) || null;
+}
+
+export const updateSubscriptionTier = async (tenantId: string, tier: SubscriptionTier): Promise<Tenant> => {
+    await delay(400);
+    const tenant = tenants.get(tenantId);
+    if (!tenant) throw new Error("Tenant not found");
+    const updatedTenant = { ...tenant, subscriptionTier: tier };
+    tenants.set(tenantId, updatedTenant);
+    saveStateToStorage();
+    return updatedTenant;
+}
 
 // Employees
 export const getEmployees = async (tenantId: string): Promise<Employee[]> => {
@@ -304,16 +372,22 @@ export const getEmployeeById = async (tenantId: string, id: string): Promise<Emp
     return employee ? { ...employee } : null;
 }
 
-export const addEmployee = async (tenantId: string, employeeData: Omit<Employee, 'id' | 'avatarUrl' | 'tenantId'>): Promise<Employee> => {
+export const addEmployee = async (tenantId: string, employeeData: Omit<Employee, 'id' | 'avatarUrl' | 'tenantId'>, user: { id: string; name: string }): Promise<Employee> => {
   await delay(500);
   const newEmployee: Employee = {
     id: `emp-${String(Date.now()).slice(-4)}`,
-    avatarUrl: `https://picsum.photos/id/${Math.floor(Math.random() * 200)}/100/100`,
+    avatarUrl: `https://i.pravatar.cc/100?u=${`emp-${String(Date.now()).slice(-4)}`}`,
     tenantId,
+    status: EmployeeStatus.Active,
+    sponsorship: SponsorshipType.Company,
+    visaType: VisaType.WorkVisa,
+    residencyStatus: 'Valid RP',
     ...employeeData,
   };
   const currentEmployees = employees.get(tenantId) || [];
   employees.set(tenantId, [...currentEmployees, newEmployee]);
+  await addAuditLog(tenantId, user, 'Added Employee', `Created new employee: ${newEmployee.name} (${newEmployee.position}).`);
+  saveStateToStorage();
   return newEmployee;
 };
 
@@ -321,13 +395,16 @@ export const updateEmployee = async (tenantId: string, employeeData: Employee): 
   await delay(500);
   const currentEmployees = employees.get(tenantId) || [];
   employees.set(tenantId, currentEmployees.map(emp => emp.id === employeeData.id ? employeeData : emp));
+  saveStateToStorage();
   return employeeData;
 };
 
-export const deleteEmployee = async (tenantId: string, employeeId: string): Promise<void> => {
+export const deleteEmployee = async (tenantId: string, employeeId: string, employeeName: string, user: { id: string; name: string }): Promise<void> => {
   await delay(500);
   const currentEmployees = employees.get(tenantId) || [];
   employees.set(tenantId, currentEmployees.filter(emp => emp.id !== employeeId));
+  await addAuditLog(tenantId, user, 'Deleted Employee', `Deleted employee: ${employeeName}.`);
+  saveStateToStorage();
 };
 
 // Roles & Permissions
@@ -341,21 +418,24 @@ export const getPermissions = async (): Promise<Permission[]> => {
     return [...permissions];
 }
 
-export const createRole = async (tenantId: string, roleData: Omit<Role, 'id'>): Promise<Role> => {
+export const createRole = async (tenantId: string, roleData: Omit<Role, 'id'>, user: { id: string; name: string }): Promise<Role> => {
     await delay(400);
     const newRole: Role = { id: `role-${tenantId}-${Date.now()}`, ...roleData };
     const currentRoles = roles.get(tenantId) || [];
     roles.set(tenantId, [...currentRoles, newRole]);
+    await addAuditLog(tenantId, user, 'Created Role', `Created new role: ${newRole.name}.`);
+    saveStateToStorage();
     return newRole;
 };
 
-export const updateRole = async (tenantId: string, roleData: Role): Promise<Role> => {
+export const updateRole = async (tenantId: string, roleData: Role, user: { id: string; name: string }): Promise<Role> => {
     await delay(400);
     const currentRoles = roles.get(tenantId) || [];
     roles.set(tenantId, currentRoles.map(r => r.id === roleData.id ? roleData : r));
-    // Also update any user currently assigned this role
     const currentUsers = users.get(tenantId) || [];
     users.set(tenantId, currentUsers.map(u => u.role.id === roleData.id ? { ...u, role: roleData } : u));
+    await addAuditLog(tenantId, user, 'Updated Role', `Updated permissions for role: ${roleData.name}.`);
+    saveStateToStorage();
     return roleData;
 }
 
@@ -377,11 +457,12 @@ export const updateUser = async (tenantId: string, userData: Pick<User, 'id' | '
         return u;
     }));
     if (!updatedUser) throw new Error("User not found");
+    saveStateToStorage();
     return updatedUser;
 };
 
 
-export const inviteUser = async (tenantId: string, companyName: string, userData: InviteUser): Promise<User> => {
+export const inviteUser = async (tenantId: string, companyName: string, userData: InviteUser, user: { id: string; name: string }): Promise<User> => {
     await delay(500);
     const role = (roles.get(tenantId) || []).find(r => r.id === userData.roleId);
     if (!role) throw new Error("Role not found");
@@ -397,6 +478,8 @@ export const inviteUser = async (tenantId: string, companyName: string, userData
     };
     const currentUsers = users.get(tenantId) || [];
     users.set(tenantId, [...currentUsers, newUser]);
+    await addAuditLog(tenantId, user, 'Invited User', `Invited ${userData.name} (${userData.username}) with role '${role.name}'.`);
+    saveStateToStorage();
     return newUser;
 };
 
@@ -408,7 +491,7 @@ export const getPayrollRuns = async (tenantId: string): Promise<PayrollRun[]> =>
     return [...runs].sort((a,b) => new Date(b.runDate).getTime() - new Date(a.runDate).getTime());
 };
 
-export const runPayroll = async (tenantId: string, month: string, year: number): Promise<{ payrollRun: PayrollRun; wpsFileContent: string; }> => {
+export const runPayroll = async (tenantId: string, month: string, year: number, user: { id: string; name: string }): Promise<{ payrollRun: PayrollRun; wpsFileContent: string; }> => {
     await delay(1500);
     const tenantEmployees = employees.get(tenantId) || [];
     const tenantSettings = companySettings.get(tenantId);
@@ -430,6 +513,8 @@ export const runPayroll = async (tenantId: string, month: string, year: number):
     };
     const currentRuns = payrollRuns.get(tenantId) || [];
     payrollRuns.set(tenantId, [newRun, ...currentRuns]);
+    await addAuditLog(tenantId, user, 'Ran Payroll', `Processed payroll for ${month} ${year} for ${tenantEmployees.length} employees.`);
+    saveStateToStorage();
     return { payrollRun: newRun, wpsFileContent };
 };
 
@@ -451,6 +536,7 @@ export const getCompanySettings = async (tenantId: string): Promise<CompanySetti
 export const updateCompanySettings = async (tenantId: string, settings: CompanySettings): Promise<CompanySettings> => {
     await delay(500);
     companySettings.set(tenantId, settings);
+    saveStateToStorage();
     return { ...settings };
 };
 
@@ -473,6 +559,7 @@ export const addDocument = async (tenantId: string, docData: Omit<EmployeeDocume
     };
     const currentDocs = documents.get(tenantId) || [];
     documents.set(tenantId, [...currentDocs, newDocument]);
+    saveStateToStorage();
     return newDocument;
 }
 
@@ -480,6 +567,7 @@ export const deleteDocument = async (tenantId: string, documentId: string): Prom
     await delay(500);
     const currentDocs = documents.get(tenantId) || [];
     documents.set(tenantId, currentDocs.filter(doc => doc.id !== documentId));
+    saveStateToStorage();
 }
 
 export const getEmployeeDocuments = async (tenantId: string, employeeId: string): Promise<EmployeeDocument[]> => {
@@ -488,14 +576,15 @@ export const getEmployeeDocuments = async (tenantId: string, employeeId: string)
 }
 
 // Assets
-export const getAssets = async (tenantId: string): Promise<CompanyAsset[]> => {
+export const getAssets = async (tenantId: string): Promise<(CompanyAsset & { assignedToEmployeeName?: string })[]> => {
     await delay(300);
-    const currentAssets = companyAssets.get(tenantId) || [];
-    const tenantEmployees = employees.get(tenantId) || [];
+    const currentAssets: CompanyAsset[] = companyAssets.get(tenantId) || [];
+    const tenantEmployees: Employee[] = employees.get(tenantId) || [];
+    
     return currentAssets.map(asset => {
         if(asset.assignedToEmployeeId) {
             const emp = tenantEmployees.find(e => e.id === asset.assignedToEmployeeId);
-            return {...asset, assignedToEmployeeName: emp?.name};
+            return { ...asset, assignedToEmployeeName: emp?.name };
         }
         return asset;
     });
@@ -510,6 +599,7 @@ export const addAsset = async (tenantId: string, assetData: Omit<CompanyAsset, '
     };
     const currentAssets = companyAssets.get(tenantId) || [];
     companyAssets.set(tenantId, [...currentAssets, newAsset]);
+    saveStateToStorage();
     return newAsset;
 }
 
@@ -517,6 +607,7 @@ export const updateAsset = async (tenantId: string, assetData: CompanyAsset): Pr
     await delay(500);
     const currentAssets = companyAssets.get(tenantId) || [];
     companyAssets.set(tenantId, currentAssets.map(asset => asset.id === assetData.id ? assetData : asset));
+    saveStateToStorage();
     return assetData;
 }
 
@@ -529,6 +620,23 @@ export const getAssetsByEmployeeId = async (tenantId: string, employeeId: string
     await delay(300);
     const emp = (employees.get(tenantId) || []).find(e => e.id === employeeId);
     return (companyAssets.get(tenantId) || []).filter(asset => asset.assignedToEmployeeId === employeeId).map(asset => ({...asset, assignedToEmployeeName: emp?.name}));
+};
+
+export const addAssetMaintenance = async (tenantId: string, maintenanceData: Omit<AssetMaintenance, 'id' | 'assetName' | 'tenantId'>): Promise<AssetMaintenance> => {
+    await delay(500);
+    const asset = (companyAssets.get(tenantId) || []).find(a => a.id === maintenanceData.assetId);
+    if (!asset) throw new Error("Asset not found");
+
+    const newMaintenance: AssetMaintenance = {
+        id: `maint-${Date.now()}`,
+        assetName: asset.name,
+        tenantId,
+        ...maintenanceData
+    };
+    const currentMaintenances = assetMaintenances.get(tenantId) || [];
+    assetMaintenances.set(tenantId, [...currentMaintenances, newMaintenance]);
+    saveStateToStorage();
+    return newMaintenance;
 };
 
 // Attendance & Leave
@@ -556,6 +664,7 @@ export const addAttendanceRecord = async (tenantId: string, recordData: Omit<Att
     };
     const currentRecords = attendanceRecords.get(tenantId) || [];
     attendanceRecords.set(tenantId, [...currentRecords, newRecord]);
+    saveStateToStorage();
     return newRecord;
 }
 
@@ -563,6 +672,13 @@ export const getLeaveRequests = async (tenantId: string): Promise<LeaveRequest[]
     await delay(300);
     return [...(leaveRequests.get(tenantId) || [])];
 }
+
+export const getEmployeeLeaveRequests = async (tenantId: string, employeeId: string): Promise<LeaveRequest[]> => {
+    await delay(200);
+    const requests = leaveRequests.get(tenantId) || [];
+    return requests.filter(req => req.employeeId === employeeId)
+                   .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+};
 
 export const addLeaveRequest = async (tenantId: string, requestData: Omit<LeaveRequest, 'id' | 'status' | 'employeeName' | 'tenantId'>): Promise<LeaveRequest> => {
     await delay(400);
@@ -578,6 +694,7 @@ export const addLeaveRequest = async (tenantId: string, requestData: Omit<LeaveR
     };
     const currentRequests = leaveRequests.get(tenantId) || [];
     leaveRequests.set(tenantId, [...currentRequests, newRequest]);
+    saveStateToStorage();
     return newRequest;
 }
 
@@ -614,6 +731,7 @@ export const updateLeaveRequestStatus = async (tenantId: string, requestId: stri
         leaveBalances.set(tenantId, updatedBalances);
     }
 
+    saveStateToStorage();
     return updatedRequest;
 }
 
@@ -622,11 +740,18 @@ export const getLeaveBalances = async (tenantId: string): Promise<LeaveBalance[]
     return [...(leaveBalances.get(tenantId) || [])];
 }
 
+export const getEmployeeLeaveBalance = async (tenantId: string, employeeId: string): Promise<LeaveBalance | null> => {
+    await delay(150);
+    const balance = (leaveBalances.get(tenantId) || []).find(b => b.employeeId === employeeId);
+    return balance || null;
+}
+
 export const updateLeaveBalance = async (tenantId: string, updatedBalance: LeaveBalance): Promise<LeaveBalance> => {
     await delay(400);
     const currentBalances = leaveBalances.get(tenantId) || [];
     const newBalances = currentBalances.map(b => b.id === updatedBalance.id ? updatedBalance : b);
     leaveBalances.set(tenantId, newBalances);
+    saveStateToStorage();
     return updatedBalance;
 }
 
@@ -651,6 +776,7 @@ export const updateOnboardingTaskStatus = async (tenantId: string, employeeId: s
         return emp;
     });
     employees.set(tenantId, newEmployees);
+    saveStateToStorage();
     return updatedTasks;
 };
 
@@ -669,6 +795,7 @@ export const updateOffboardingTaskStatus = async (tenantId: string, employeeId: 
         return emp;
     });
     employees.set(tenantId, newEmployees);
+    saveStateToStorage();
     return updatedTasks;
 };
 
@@ -682,6 +809,7 @@ export const updateContractDetails = async (tenantId: string, employeeId: string
         return emp;
     });
     employees.set(tenantId, newEmployees);
+    saveStateToStorage();
     return contractDetails;
 }
 
@@ -701,6 +829,7 @@ export const addJobOpening = async (tenantId: string, jobData: Omit<JobOpening, 
     };
     const currentJobs = jobOpenings.get(tenantId) || [];
     jobOpenings.set(tenantId, [newJob, ...currentJobs]);
+    saveStateToStorage();
     return newJob;
 };
 
@@ -724,6 +853,7 @@ export const addCandidate = async (tenantId: string, candidateData: Omit<Candida
     };
     const currentCandidates = candidates.get(tenantId) || [];
     candidates.set(tenantId, [...currentCandidates, newCandidate]);
+    saveStateToStorage();
     return newCandidate;
 };
 
@@ -740,7 +870,106 @@ export const updateCandidateStatus = async (tenantId: string, candidateId: strin
     });
     if (!updatedCandidate) throw new Error("Candidate not found");
     candidates.set(tenantId, newCandidates);
+    saveStateToStorage();
     return updatedCandidate;
+};
+
+// Vehicle Management
+export const getVehicles = async (tenantId: string): Promise<CompanyVehicle[]> => {
+    await delay(300);
+    return [...(companyVehicles.get(tenantId) || [])];
+}
+
+export const addVehicle = async (tenantId: string, vehicleData: Omit<CompanyVehicle, 'id' | 'tenantId'>): Promise<CompanyVehicle> => {
+    await delay(400);
+    const newVehicle: CompanyVehicle = { id: `veh-${Date.now()}`, tenantId, ...vehicleData };
+    const current = companyVehicles.get(tenantId) || [];
+    companyVehicles.set(tenantId, [...current, newVehicle]);
+    saveStateToStorage();
+    return newVehicle;
+}
+
+export const updateVehicle = async (tenantId: string, vehicleData: CompanyVehicle): Promise<CompanyVehicle> => {
+    await delay(400);
+    const current = companyVehicles.get(tenantId) || [];
+    companyVehicles.set(tenantId, current.map(v => v.id === vehicleData.id ? vehicleData : v));
+    saveStateToStorage();
+    return vehicleData;
+}
+
+export const getVehicleLogs = async (tenantId: string): Promise<VehicleLog[]> => {
+    await delay(300);
+    return [...(vehicleLogs.get(tenantId) || [])];
+}
+
+export const addVehicleLog = async (tenantId: string, logData: Omit<VehicleLog, 'id' | 'tenantId' | 'vehicleName' | 'employeeName'>): Promise<VehicleLog> => {
+    await delay(400);
+    const vehicle = (companyVehicles.get(tenantId) || []).find(v => v.id === logData.vehicleId);
+    const employee = (employees.get(tenantId) || []).find(e => e.id === logData.employeeId);
+    if (!vehicle || !employee) throw new Error("Vehicle or Employee not found");
+    
+    const newLog: VehicleLog = { id: `log-${Date.now()}`, tenantId, vehicleName: `${vehicle.make} ${vehicle.model}`, employeeName: employee.name, ...logData };
+    const current = vehicleLogs.get(tenantId) || [];
+    vehicleLogs.set(tenantId, [newLog, ...current]);
+    saveStateToStorage();
+    return newLog;
+}
+
+// Petty Cash
+export const getPettyCashTransactions = async (tenantId: string): Promise<PettyCashTransaction[]> => {
+    await delay(300);
+    return [...(pettyCashTransactions.get(tenantId) || [])].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+}
+
+export const getDepartmentBalances = async (tenantId: string): Promise<Record<Employee['department'], number>> => {
+    await delay(200);
+    const transactions = pettyCashTransactions.get(tenantId) || [];
+    const balances = { 'Engineering': 0, 'HR': 0, 'Marketing': 0, 'Sales': 0, 'Finance': 0 };
+    transactions.forEach(t => {
+        if (t.status === 'Approved') {
+            if (t.type === 'Top-up') {
+                balances[t.department] += t.amount;
+            } else {
+                balances[t.department] -= t.amount;
+            }
+        }
+    });
+    return balances;
+}
+
+export const addPettyCashTransaction = async (tenantId: string, transData: Omit<PettyCashTransaction, 'id' | 'tenantId' | 'employeeName' | 'status'>): Promise<PettyCashTransaction> => {
+    await delay(400);
+    const employee = (employees.get(tenantId) || []).find(e => e.id === transData.employeeId);
+    if (!employee) throw new Error("Employee not found");
+
+    const newTransaction: PettyCashTransaction = { id: `pc-${Date.now()}`, tenantId, employeeName: employee.name, status: 'Pending', ...transData };
+    const current = pettyCashTransactions.get(tenantId) || [];
+    pettyCashTransactions.set(tenantId, [newTransaction, ...current]);
+    saveStateToStorage();
+    return newTransaction;
+}
+
+export const updatePettyCashStatus = async (tenantId: string, transactionId: string, status: 'Approved' | 'Rejected'): Promise<PettyCashTransaction> => {
+    await delay(500);
+    const current = pettyCashTransactions.get(tenantId) || [];
+    let updatedTransaction: PettyCashTransaction | undefined;
+    const updatedList = current.map(t => {
+        if (t.id === transactionId) {
+            updatedTransaction = { ...t, status };
+            return updatedTransaction;
+        }
+        return t;
+    });
+    if (!updatedTransaction) throw new Error("Transaction not found");
+    pettyCashTransactions.set(tenantId, updatedList);
+    saveStateToStorage();
+    return updatedTransaction;
+}
+
+// Audit Log
+export const getAuditLogs = async (tenantId: string): Promise<AuditLog[]> => {
+    await delay(300);
+    return [...(auditLogs.get(tenantId) || [])];
 };
 
 
@@ -761,4 +990,81 @@ export const getAlerts = async (tenantId: string): Promise<{ expiringDocs: Emplo
     });
 
     return { expiringDocs, pendingLeaves };
+};
+
+// Manager Dashboard
+export const getManagerDashboardData = async (tenantId: string, managerEmployeeId: string): Promise<{ directReports: Employee[], pendingLeaveRequests: LeaveRequest[] }> => {
+    await delay(400);
+    const tenantEmployees = employees.get(tenantId) || [];
+    const directReports = tenantEmployees.filter(e => e.managerId === managerEmployeeId);
+    const directReportIds = new Set(directReports.map(e => e.id));
+    
+    const tenantLeaveRequests = leaveRequests.get(tenantId) || [];
+    const pendingLeaveRequests = tenantLeaveRequests.filter(req => req.status === 'Pending' && directReportIds.has(req.employeeId));
+    
+    return { directReports, pendingLeaveRequests };
+};
+
+// Help & Support
+export const submitSupportTicket = async (tenantId: string, user: {id: string, name: string}, ticketData: Omit<SupportTicket, 'id' | 'createdAt' | 'tenantId' | 'userId' | 'userName' | 'status'>): Promise<SupportTicket> => {
+    await delay(500);
+    const newTicket: SupportTicket = {
+        id: `ticket-${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        tenantId,
+        userId: user.id,
+        userName: user.name,
+        status: 'Open',
+        ...ticketData
+    };
+    const currentTickets = supportTickets.get(tenantId) || [];
+    supportTickets.set(tenantId, [newTicket, ...currentTickets]);
+    saveStateToStorage();
+    return newTicket;
+};
+
+// Knowledge Base
+export const getKnowledgeBaseArticles = async (tenantId: string): Promise<KnowledgeBaseArticle[]> => {
+    await delay(300);
+    return [...(knowledgeBaseArticles.get(tenantId) || [])].sort((a,b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+};
+
+export const addKnowledgeBaseArticle = async (tenantId: string, articleData: Omit<KnowledgeBaseArticle, 'id' | 'tenantId' | 'createdAt' | 'updatedAt' | 'authorId' | 'authorName'>, user: { id: string; name: string }): Promise<KnowledgeBaseArticle> => {
+    await delay(500);
+    const now = new Date().toISOString();
+    const newArticle: KnowledgeBaseArticle = {
+        id: `kb-${Date.now()}`,
+        tenantId,
+        createdAt: now,
+        updatedAt: now,
+        authorId: user.id,
+        authorName: user.name,
+        ...articleData,
+    };
+    const current = knowledgeBaseArticles.get(tenantId) || [];
+    knowledgeBaseArticles.set(tenantId, [newArticle, ...current]);
+    await addAuditLog(tenantId, user, 'Created KB Article', `Created new article: "${newArticle.title}".`);
+    saveStateToStorage();
+    return newArticle;
+};
+
+export const updateKnowledgeBaseArticle = async (tenantId: string, articleData: KnowledgeBaseArticle, user: { id: string; name: string }): Promise<KnowledgeBaseArticle> => {
+    await delay(500);
+    const updatedArticle = { ...articleData, updatedAt: new Date().toISOString() };
+    const current = knowledgeBaseArticles.get(tenantId) || [];
+    knowledgeBaseArticles.set(tenantId, current.map(a => a.id === updatedArticle.id ? updatedArticle : a));
+    await addAuditLog(tenantId, user, 'Updated KB Article', `Updated article: "${updatedArticle.title}".`);
+    saveStateToStorage();
+    return updatedArticle;
+};
+
+export const deleteKnowledgeBaseArticle = async (tenantId: string, articleId: string, user: { id: string; name: string }): Promise<void> => {
+    await delay(500);
+    const current = knowledgeBaseArticles.get(tenantId) || [];
+    const articleToDelete = current.find(a => a.id === articleId);
+    knowledgeBaseArticles.set(tenantId, current.filter(a => a.id !== articleId));
+    if (articleToDelete) {
+        await addAuditLog(tenantId, user, 'Deleted KB Article', `Deleted article: "${articleToDelete.title}".`);
+    }
+    saveStateToStorage();
 };

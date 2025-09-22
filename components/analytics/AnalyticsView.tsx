@@ -15,7 +15,7 @@ const AnalyticsView: React.FC = () => {
 
     return (
         <div className="p-6 space-y-6">
-            <h2 className="text-xl font-semibold text-brand-dark">Analytics & Reports</h2>
+            <h2 className="text-xl font-semibold text-foreground">Analytics & Reports</h2>
             
             <Tabs<TabId> tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
 

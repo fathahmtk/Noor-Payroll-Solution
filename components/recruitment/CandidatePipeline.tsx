@@ -7,13 +7,19 @@ import KanbanColumn from './KanbanColumn';
 import { useAppContext } from '../../AppContext';
 import { useToasts } from '../../hooks/useToasts';
 
-const STAGES: CandidateStatus[] = ['Applied', 'Screening', 'Interview', 'Offer', 'Hired', 'Rejected'];
+const STAGES: CandidateStatus[] = ['Applied', 'Screening', 'Interview', 'Offer', 'Hired', 'Converted', 'Rejected'];
 
 const CandidatePipeline: React.FC = () => {
-    const { currentUser } = useAppContext();
+    const { currentUser, openModal } = useAppContext();
     const { addToast } = useToasts();
-    const { data: candidates, loading: loadingCandidates, refresh: refreshCandidates } = useDataFetching(() => getCandidates(currentUser!.tenantId));
-    const { data: jobOpenings, loading: loadingJobs } = useDataFetching(() => getJobOpenings(currentUser!.tenantId));
+    const { data: candidates, loading: loadingCandidates, refresh: refreshCandidates } = useDataFetching(
+        currentUser ? `candidates-${currentUser.tenantId}` : null,
+        () => getCandidates(currentUser!.tenantId)
+    );
+    const { data: jobOpenings, loading: loadingJobs } = useDataFetching(
+        currentUser ? `jobOpenings-${currentUser.tenantId}` : null,
+        () => getJobOpenings(currentUser!.tenantId)
+    );
     
     const [selectedJobId, setSelectedJobId] = useState<string>('all');
 
@@ -26,6 +32,10 @@ const CandidatePipeline: React.FC = () => {
             addToast('Failed to update status.', 'error');
         }
     };
+
+    const handleViewDetails = (candidate: Candidate) => {
+        openModal('viewCandidate', { candidate, onUpdate: refreshCandidates });
+    };
     
     const filteredCandidates = useMemo(() => {
         if (selectedJobId === 'all') {
@@ -36,10 +46,12 @@ const CandidatePipeline: React.FC = () => {
 
     const groupedCandidates = useMemo(() => {
         const groups: Record<CandidateStatus, Candidate[]> = {
-            Applied: [], Screening: [], Interview: [], Offer: [], Hired: [], Rejected: [],
+            Applied: [], Screening: [], Interview: [], Offer: [], Hired: [], Rejected: [], Converted: [],
         };
         filteredCandidates.forEach(candidate => {
-            groups[candidate.status]?.push(candidate);
+            if (groups[candidate.status]) {
+                groups[candidate.status].push(candidate);
+            }
         });
         return groups;
     }, [filteredCandidates]);
@@ -49,12 +61,12 @@ const CandidatePipeline: React.FC = () => {
     return (
         <div className="space-y-4">
             <div className="flex items-center space-x-4">
-                <label htmlFor="jobFilter" className="font-semibold">Filter by Job:</label>
+                <label htmlFor="jobFilter" className="font-semibold text-muted-foreground">Filter by Job:</label>
                 <select 
                     id="jobFilter"
                     value={selectedJobId}
                     onChange={e => setSelectedJobId(e.target.value)}
-                    className="border border-slate-300 rounded-lg shadow-sm p-2 bg-white"
+                    className="border border-border bg-secondary rounded-lg shadow-sm p-2 text-foreground"
                 >
                     <option value="all">All Open Jobs</option>
                     {(jobOpenings || []).filter(j => j.status === 'Open').map(job => (
@@ -71,6 +83,7 @@ const CandidatePipeline: React.FC = () => {
                             title={stage}
                             candidates={groupedCandidates[stage]}
                             onStatusChange={handleStatusChange}
+                            onViewDetails={handleViewDetails}
                         />
                     ))}
                 </div>

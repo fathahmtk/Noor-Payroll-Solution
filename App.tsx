@@ -1,84 +1,66 @@
-import React, { useState, useMemo } from 'react';
-import { View, User } from './types';
-import LoginPage from './components/auth/LoginPage';
-import LandingPage from './components/LandingPage';
-import { ToastProvider } from './hooks/useToasts';
-import { AppProvider } from './AppContext';
-import Sidebar from './components/layout/Sidebar';
-import TopNavBar from './components/layout/TopNavBar';
-import Header from './components/layout/Header';
-import ViewRenderer from './ViewRenderer';
+import React, { useState, useEffect } from 'react';
+import { User } from './types.ts';
+import LandingPage from './components/LandingPage.tsx';
+import { ToastProvider } from './hooks/useToasts.tsx';
+import { AppProvider } from './AppContext.tsx';
+import LoadingSpinner from './components/common/LoadingSpinner.tsx';
+import MainApp from './MainApp.tsx';
+import LoginPage from './components/auth/LoginPage.tsx';
 
-const MainApp: React.FC<{ currentUser: User; onLogout: () => void }> = ({ currentUser, onLogout }) => {
-  
-  const initialView = useMemo(() => {
-    if (currentUser.role.name === 'Employee') {
-        return View.EmployeeDashboard;
-    }
-    if (!currentUser.role.permissions.includes('dashboard:view')) {
-      return View.MyProfile; 
-    }
-    return View.Dashboard;
-  }, [currentUser]);
-
-  const [currentView, setCurrentView] = useState<View>(initialView);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
-
-  const handleViewProfile = (employeeId: string) => {
-    setSelectedEmployeeId(employeeId);
-    setCurrentView(View.EmployeeProfile);
-  };
-  
-  const handleBackToEmployees = () => {
-    setSelectedEmployeeId(null);
-    setCurrentView(View.Employees);
-  };
-
-  const headerTitle = useMemo(() => {
-    if (currentView === View.EmployeeProfile && selectedEmployeeId) {
-      return `Employee Profile`;
-    }
-    return currentView;
-  }, [currentView, selectedEmployeeId]);
-
-
-  return (
-    <div className="flex h-screen bg-brand-secondary">
-      <Sidebar user={currentUser} currentView={currentView} onNavigate={setCurrentView} onLogout={onLogout} isCollapsed={isSidebarCollapsed} setIsCollapsed={setIsSidebarCollapsed} />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <TopNavBar user={currentUser} onNavigate={setCurrentView}/>
-        <main className="flex-1 overflow-y-auto">
-          <Header title={headerTitle} onBack={currentView === View.EmployeeProfile ? handleBackToEmployees : undefined} />
-          <ViewRenderer 
-              currentView={currentView} 
-              setCurrentView={setCurrentView}
-              selectedEmployeeId={selectedEmployeeId}
-              onViewProfile={handleViewProfile}
-          />
-        </main>
-      </div>
-    </div>
-  );
-};
-
+const SESSION_KEY = 'noor-hr-session-v1';
 
 const App: React.FC = () => {
-  const [appState, setAppState] = useState<'landing' | 'login' | 'dashboard'>('landing');
+  const [appState, setAppState] = useState<'loading' | 'landing' | 'login' | 'dashboard'>('loading');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
+  useEffect(() => {
+    // Check session only once on initial mount
+    try {
+      const storedUser = sessionStorage.getItem(SESSION_KEY);
+      if (storedUser) {
+        const user: User = JSON.parse(storedUser);
+        setCurrentUser(user);
+        setAppState('dashboard');
+      } else {
+        setAppState('landing'); // No session, go to landing page
+      }
+    } catch (error) {
+      console.error("Failed to parse session user", error);
+      sessionStorage.removeItem(SESSION_KEY);
+      setAppState('landing');
+    }
+  }, []); // Empty dependency array ensures this runs only once
+
+  useEffect(() => {
+    // Effect to handle inconsistent state safely
+    if (appState === 'dashboard' && !currentUser) {
+      console.warn("Inconsistent state: dashboard view without a user. Redirecting to login.");
+      setAppState('login');
+    }
+  }, [appState, currentUser]);
+
   const handleLoginSuccess = (user: User) => {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(user));
     setCurrentUser(user);
     setAppState('dashboard');
   };
-  
+
   const handleLogout = () => {
+    sessionStorage.removeItem(SESSION_KEY);
     setCurrentUser(null);
     setAppState('landing');
   };
-
+  
   const renderContent = () => {
+    const loadingScreen = (
+        <div className="flex h-screen w-screen items-center justify-center bg-background text-foreground">
+          <LoadingSpinner />
+        </div>
+    );
+
     switch (appState) {
+      case 'loading':
+        return loadingScreen;
       case 'landing':
         return <LandingPage onLoginClick={() => setAppState('login')} onSignUpClick={() => setAppState('login')} />;
       case 'login':
@@ -87,8 +69,9 @@ const App: React.FC = () => {
         if (currentUser) {
           return <MainApp currentUser={currentUser} onLogout={handleLogout} />;
         }
-        setAppState('login');
-        return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+        // State is inconsistent, wait for useEffect to correct it.
+        // Show a loader to prevent a flicker of content.
+        return loadingScreen;
     }
   };
 
@@ -99,6 +82,6 @@ const App: React.FC = () => {
       </AppProvider>
     </ToastProvider>
   );
-}
+};
 
 export default App;

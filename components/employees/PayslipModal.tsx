@@ -6,7 +6,7 @@ import Modal from '../common/Modal';
 import Button from '../common/Button';
 import DownloadIcon from '../icons/DownloadIcon';
 
-interface PayslipModalProps {
+interface ViewWPSPayslipModalProps {
   isOpen: boolean;
   onClose: () => void;
   employee: Employee | null;
@@ -14,7 +14,7 @@ interface PayslipModalProps {
   companySettings: CompanySettings | null;
 }
 
-const PayslipModal: React.FC<PayslipModalProps> = ({ isOpen, onClose, employee, payrollRun, companySettings }) => {
+const ViewWPSPayslipModal: React.FC<ViewWPSPayslipModalProps> = ({ isOpen, onClose, employee, payrollRun, companySettings }) => {
   const payslipRef = useRef<HTMLDivElement>(null);
 
   const handleDownloadPDF = async () => {
@@ -102,4 +102,4 @@ const PayslipModal: React.FC<PayslipModalProps> = ({ isOpen, onClose, employee, 
   );
 };
 
-export default PayslipModal;
+export default ViewWPSPayslipModal;
