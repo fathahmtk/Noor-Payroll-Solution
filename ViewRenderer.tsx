@@ -4,6 +4,7 @@ import { View, SubscriptionTier } from './types';
 import { useAppContext } from './AppContext.tsx';
 import LoadingSpinner from './components/common/LoadingSpinner.tsx';
 
+// Lazy load all view components
 const DashboardView = React.lazy(() => import('./components/dashboard/DashboardView.tsx'));
 const EmployeesView = React.lazy(() => import('./components/employees/EmployeesView.tsx'));
 const OrganizationView = React.lazy(() => import('./components/organization/OrganizationView.tsx'));
@@ -26,6 +27,7 @@ const ManagerDashboardView = React.lazy(() => import('./components/manager-dashb
 const DirectoryView = React.lazy(() => import('./components/directory/DirectoryView.tsx'));
 const HelpSupportView = React.lazy(() => import('./components/help/HelpSupportView.tsx'));
 const KnowledgeBaseView = React.lazy(() => import('./components/knowledge-base/KnowledgeBaseView.tsx'));
+const PPPView = React.lazy(() => import('./components/ppp/PPPView.tsx'));
 
 
 interface ViewRendererProps {
@@ -52,9 +54,10 @@ const ViewRenderer: React.FC<ViewRendererProps> = ({ currentView, setCurrentView
     const { currentUser, openModal, tenant, isManager } = useAppContext();
 
     const hasPermission = (permissionId: string): boolean => {
+      if (!currentUser) return false;
       // Owner role has all permissions implicitly
-      if (currentUser!.role.name === 'Owner') return true;
-      return currentUser!.role.permissions.includes(permissionId);
+      if (currentUser.role.name === 'Owner') return true;
+      return currentUser.role.permissions.includes(permissionId);
     };
 
     const hasTierAccess = (requiredTier: SubscriptionTier): boolean => {
@@ -94,51 +97,24 @@ const ViewRenderer: React.FC<ViewRendererProps> = ({ currentView, setCurrentView
           case View.Payroll:
             if (!hasPermission('payroll:read')) return <AccessDenied />;
             return hasTierAccess(SubscriptionTier.Premium) ? <PayrollView /> : UpgradeScreen;
+          case View.PPP:
+            if (!hasPermission('payroll:run')) return <AccessDenied />;
+            return hasTierAccess(SubscriptionTier.Premium) ? <PPPView /> : UpgradeScreen;
           case View.TimeAttendance:
-            if (!hasPermission('employees:read')) return <AccessDenied />;
-            return hasTierAccess(SubscriptionTier.Premium) ? <TimeAttendanceView /> : UpgradeScreen;
+             if (!hasPermission('operations:manage')) return <AccessDenied />;
+             return hasTierAccess(SubscriptionTier.Premium) ? <TimeAttendanceView /> : UpgradeScreen;
           case View.Documents:
-            return hasPermission('employees:read') ? <DocumentView /> : <AccessDenied />;
+             return hasPermission('employees:read') ? <DocumentView /> : <AccessDenied />;
           case View.Assets:
-            if (!hasPermission('operations:manage')) return <AccessDenied />;
-            return hasTierAccess(SubscriptionTier.Premium) ? <AssetView /> : UpgradeScreen;
+             if (!hasPermission('operations:manage')) return <AccessDenied />;
+             return hasTierAccess(SubscriptionTier.Premium) ? <AssetView /> : UpgradeScreen;
           case View.VehicleManagement:
-            if (!hasPermission('operations:manage')) return <AccessDenied />;
-            return hasTierAccess(SubscriptionTier.Premium) ? <VehicleManagementView /> : UpgradeScreen;
+             if (!hasPermission('operations:manage')) return <AccessDenied />;
+             return hasTierAccess(SubscriptionTier.Premium) ? <VehicleManagementView /> : UpgradeScreen;
           case View.PettyCash:
-            if (!hasPermission('operations:manage')) return <AccessDenied />;
-            return hasTierAccess(SubscriptionTier.Premium) ? <PettyCashView /> : UpgradeScreen;
+             if (!hasPermission('operations:manage')) return <AccessDenied />;
+             return hasTierAccess(SubscriptionTier.Premium) ? <PettyCashView /> : UpgradeScreen;
           case View.KnowledgeBase:
-            return <KnowledgeBaseView />;
+             return <KnowledgeBaseView />;
           case View.LaborLawCompliance:
-            return hasPermission('employees:read') ? <LaborLawComplianceView /> : <AccessDenied />;
-          case View.AuditTrail:
-            return currentUser.role.name === 'Owner' ? <AuditTrailView /> : <AccessDenied />;
-          case View.AnalyticsReports:
-            if (!hasPermission('reports:view')) return <AccessDenied />;
-            return hasTierAccess(SubscriptionTier.Enterprise) ? <AnalyticsView /> : UpgradeScreen;
-          case View.Settings:
-            return hasPermission('settings:manage') ? <SettingsView /> : <AccessDenied />;
-          // Employee-specific views don't typically need permission checks beyond being logged in
-          case View.EmployeeDashboard:
-            return <EmployeeDashboardView user={currentUser} onRequestLeave={handleRequestLeave} />;
-          case View.MyProfile:
-            return <MyProfileView user={currentUser} />;
-          case View.HelpSupport:
-            return <HelpSupportView />;
-          default:
-              // Fallback for managers or others to a relevant page
-              if (isManager) return <ManagerDashboardView />;
-              if (hasPermission('dashboard:view')) return <DashboardView onNavigate={setCurrentView} />;
-              return <EmployeeDashboardView user={currentUser} onRequestLeave={handleRequestLeave} />;
-        }
-    }
-
-    return (
-      <Suspense fallback={suspenseFallback}>
-        {renderContent()}
-      </Suspense>
-    );
-};
-
-export default ViewRenderer;
+             return hasPermission('employees:read') ? <Labor

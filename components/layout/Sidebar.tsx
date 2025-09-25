@@ -21,6 +21,7 @@ import AuditLogIcon from '../icons/AuditLogIcon.tsx';
 import ManagerIcon from '../icons/ManagerIcon.tsx';
 import HelpIcon from '../icons/HelpIcon.tsx';
 import KnowledgeBaseIcon from '../icons/KnowledgeBaseIcon.tsx';
+import LoanIcon from '../icons/LoanIcon.tsx';
 
 interface SidebarProps {
   user: User;
@@ -54,6 +55,7 @@ const NAV_GROUPS = [
         title: 'Payroll',
         items: [
              { view: View.Payroll, label: 'Payroll & WPS', icon: <PayrollIcon className="w-5 h-5" />, roles: ['Owner', 'HR Manager', 'Accounts'], tier: SubscriptionTier.Premium },
+             { view: View.PPP, label: 'PPP Calculator', icon: <LoanIcon className="w-5 h-5" />, roles: ['Owner', 'HR Manager'], tier: SubscriptionTier.Premium },
         ]
     },
     {

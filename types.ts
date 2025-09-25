@@ -350,6 +350,7 @@ export enum View {
   Directory = 'Company Directory',
   Recruitment = 'Recruitment',
   Payroll = 'Payroll & WPS',
+  PPP = 'PPP Loan Calculator',
   TimeAttendance = 'Time & Attendance',
   Documents = 'Document Management',
   Assets = 'Asset Management',
